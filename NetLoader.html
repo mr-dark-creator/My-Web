@@ -1,10 +1,11 @@
-
-```html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>Net Loader // NEX</title>
     <style>
         :root {
@@ -15,13 +16,19 @@
             --text-bright: #ffffff;
             --text-dim: #666666;
             --accent: #ffffff;
-            --glow: rgba(255, 255, 255, 0.08);
+            --glow: rgba(255, 255, 255, 0.06);
+            /* মোবাইল-ফ্রেন্ডলি সাইজিং */
+            --tap-target: 48px;
+            --radius: 2px;
         }
 
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -29,14 +36,17 @@
             font-family: 'Courier New', 'Fira Code', 'Consolas', 'Monaco', monospace;
             color: var(--text);
             min-height: 100vh;
+            min-height: 100dvh;
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-x: hidden;
+            overflow-y: auto;
             position: relative;
-            user-select: none;
+            padding: 12px;
         }
 
+        /* স্ক্যানলাইন - মোবাইলে হালকা */
         .scanlines {
             position: fixed;
             top: 0;
@@ -48,9 +58,9 @@
             background: repeating-linear-gradient(
                 0deg,
                 transparent,
-                transparent 2px,
-                rgba(0, 0, 0, 0.08) 2px,
-                rgba(0, 0, 0, 0.08) 4px
+                transparent 3px,
+                rgba(0, 0, 0, 0.05) 3px,
+                rgba(0, 0, 0, 0.05) 6px
             );
         }
 
@@ -62,9 +72,9 @@
             height: 100%;
             pointer-events: none;
             z-index: 99;
-            opacity: 0.03;
+            opacity: 0.02;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-            background-size: 200px 200px;
+            background-size: 150px 150px;
         }
 
         #matrixCanvas {
@@ -74,96 +84,102 @@
             width: 100%;
             height: 100%;
             z-index: 0;
-            opacity: 0.15;
+            opacity: 0.1;
         }
 
+        /* মেইন কন্টেইনার - মোবাইল ফার্স্ট */
         .container {
             position: relative;
             z-index: 10;
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
         .terminal {
-            background: rgba(10, 10, 10, 0.85);
+            background: rgba(10, 10, 10, 0.88);
             border: 1px solid var(--border);
-            border-radius: 2px;
+            border-radius: var(--radius);
             box-shadow: 
-                0 0 0 1px rgba(255,255,255,0.03),
-                0 20px 60px rgba(0,0,0,0.8),
-                inset 0 0 100px rgba(255,255,255,0.005);
+                0 0 0 1px rgba(255,255,255,0.02),
+                0 15px 40px rgba(0,0,0,0.7),
+                inset 0 0 60px rgba(255,255,255,0.003);
             overflow: hidden;
         }
 
         .terminal-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 16px;
+            gap: 6px;
+            padding: 8px 12px;
             background: #0d0d0d;
             border-bottom: 1px solid var(--border);
         }
 
         .terminal-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             border-radius: 50%;
             border: 1px solid #333;
             background: #1a1a1a;
+            flex-shrink: 0;
         }
-        .terminal-dot:nth-child(1) { background: #333; }
-        .terminal-dot:nth-child(2) { background: #333; }
-        .terminal-dot:nth-child(3) { background: #333; }
 
         .terminal-title {
             flex: 1;
             text-align: center;
-            font-size: 11px;
+            font-size: 9px;
             color: #444;
             letter-spacing: 2px;
             text-transform: uppercase;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .terminal-body {
-            padding: 30px 25px 25px;
+            padding: 20px 16px 18px;
         }
 
+        /* ASCII লোগো - মোবাইলে ছোট */
         .ascii-logo {
             text-align: center;
-            font-size: 10px;
-            line-height: 1.1;
-            color: #555;
-            margin-bottom: 20px;
+            font-size: 7px;
+            line-height: 1.15;
+            color: #444;
+            margin-bottom: 14px;
             white-space: pre;
             letter-spacing: 0;
             animation: flickerText 4s infinite;
+            overflow: hidden;
         }
 
         @keyframes flickerText {
             0%, 100% { opacity: 1; }
-            8% { opacity: 0.7; }
+            8% { opacity: 0.6; }
             10% { opacity: 1; }
-            30% { opacity: 0.85; }
+            30% { opacity: 0.8; }
             33% { opacity: 1; }
-            55% { opacity: 0.6; }
+            55% { opacity: 0.5; }
             57% { opacity: 1; }
-            92% { opacity: 0.8; }
+            92% { opacity: 0.7; }
             94% { opacity: 1; }
         }
 
         .glitch-wrapper {
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .glitch {
-            font-size: 2.2em;
+            font-size: 1.6em;
             font-weight: bold;
             color: var(--text-bright);
-            letter-spacing: 6px;
+            letter-spacing: 4px;
             position: relative;
             display: inline-block;
             text-transform: uppercase;
+            line-height: 1.2;
         }
 
         .glitch::before,
@@ -174,160 +190,175 @@
             left: 0;
             width: 100%;
             height: 100%;
-            opacity: 0.6;
+            opacity: 0.5;
         }
 
         .glitch::before {
-            color: #888;
+            color: #777;
             z-index: -1;
-            animation: glitchAnim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
-            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+            animation: glitchAnim 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 40%, 0 40%);
         }
 
         .glitch::after {
-            color: #444;
+            color: #333;
             z-index: -2;
-            animation: glitchAnim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
-            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+            animation: glitchAnim 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
+            clip-path: polygon(0 60%, 100% 60%, 100% 100%, 0 100%);
         }
 
         @keyframes glitchAnim {
             0% { transform: translate(0); }
-            20% { transform: translate(-3px, 2px); }
-            40% { transform: translate(3px, -1px); }
-            60% { transform: translate(-1px, -2px); }
-            80% { transform: translate(2px, 1px); }
+            20% { transform: translate(-2px, 1px); }
+            40% { transform: translate(2px, -1px); }
+            60% { transform: translate(-1px, -1px); }
+            80% { transform: translate(1px, 1px); }
             100% { transform: translate(0); }
         }
 
         .subtitle {
             text-align: center;
-            font-size: 10px;
+            font-size: 8px;
             color: #444;
-            letter-spacing: 3px;
-            margin-bottom: 30px;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
             text-transform: uppercase;
         }
 
         .subtitle .blink {
             animation: blink 1s step-end infinite;
-            color: #666;
+            color: #555;
         }
 
         @keyframes blink {
             50% { opacity: 0; }
         }
 
+        /* প্ল্যাটফর্ম ট্যাগ */
+        .platform-tags {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 16px;
+        }
+
+        .platform-tag {
+            font-size: 8px;
+            padding: 4px 8px;
+            border: 1px solid #222;
+            border-radius: 10px;
+            color: #555;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .platform-tag.active {
+            border-color: #555;
+            color: #999;
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* ইনপুট লাইন */
         .input-line {
             display: flex;
             align-items: center;
             background: #050505;
             border: 1px solid var(--border);
-            border-radius: 1px;
-            padding: 0;
+            border-radius: var(--radius);
             position: relative;
             transition: all 0.2s ease;
+            min-height: var(--tap-target);
         }
 
         .input-line:focus-within {
             border-color: #444;
-            box-shadow: 0 0 20px var(--glow);
+            box-shadow: 0 0 16px var(--glow);
         }
 
         .prompt {
-            padding: 16px 14px;
+            padding: 0 10px;
             color: #555;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             border-right: 1px solid #1a1a1a;
             background: #0a0a0a;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+            line-height: var(--tap-target);
+            flex-shrink: 0;
         }
 
         .url-input {
             flex: 1;
-            padding: 16px 16px;
+            padding: 0 12px;
             background: transparent;
             border: none;
             color: var(--text-bright);
             font-family: inherit;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
             caret-color: #fff;
+            line-height: var(--tap-target);
+            min-width: 0;
         }
 
         .url-input::placeholder {
             color: #333;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            font-size: 11px;
         }
 
         .url-input:focus::placeholder {
-            color: #444;
+            color: #3a3a3a;
         }
 
+        /* কমান্ড বাটন */
         .command-btn {
             width: 100%;
-            margin-top: 15px;
-            padding: 16px;
+            margin-top: 12px;
+            padding: 0;
+            line-height: var(--tap-target);
+            min-height: var(--tap-target);
             background: #0f0f0f;
             border: 1px solid #222;
             color: var(--text-bright);
             font-family: inherit;
-            font-size: 13px;
-            letter-spacing: 3px;
+            font-size: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
-        }
-
-        .command-btn::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .command-btn:hover::before {
-            left: 100%;
-        }
-
-        .command-btn:hover {
-            background: #1a1a1a;
-            border-color: #555;
-            box-shadow: 0 0 30px rgba(255,255,255,0.05);
+            -webkit-tap-highlight-color: rgba(255,255,255,0.05);
         }
 
         .command-btn:active {
-            background: #000;
-            border-color: #fff;
+            background: #1a1a1a;
+            border-color: #555;
+            box-shadow: 0 0 25px rgba(255,255,255,0.04);
         }
 
         .command-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
+            opacity: 0.35;
+            pointer-events: none;
         }
 
         .command-btn .cmd-prompt {
             color: #555;
-            margin-right: 6px;
+            margin-right: 4px;
         }
 
         .spinner {
             display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid #333;
+            width: 13px;
+            height: 13px;
+            border: 2px solid #2a2a2a;
             border-top-color: #fff;
             border-radius: 50%;
             animation: spin 0.7s linear infinite;
-            margin-right: 8px;
+            margin-right: 6px;
             vertical-align: middle;
         }
 
@@ -335,57 +366,65 @@
             to { transform: rotate(360deg); }
         }
 
+        /* আউটপুট এরিয়া */
         .output-area {
-            margin-top: 20px;
+            margin-top: 14px;
             border: 1px solid var(--border);
             background: #050505;
-            border-radius: 1px;
+            border-radius: var(--radius);
             display: none;
         }
 
         .output-area.show {
             display: block;
+            animation: fadeSlideIn 0.2s ease;
+        }
+
+        @keyframes fadeSlideIn {
+            from { opacity: 0; transform: translateY(-8px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .output-header {
             display: flex;
             align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
+            gap: 6px;
+            padding: 8px 12px;
             border-bottom: 1px solid #1a1a1a;
-            font-size: 10px;
+            font-size: 8px;
             color: #555;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
 
         .output-header .status-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             background: #555;
             border-radius: 50%;
         }
         .output-header .status-dot.active {
             background: #fff;
-            box-shadow: 0 0 6px #fff;
+            box-shadow: 0 0 5px #fff;
         }
 
         .output-body {
-            padding: 14px;
+            padding: 12px;
         }
 
         .file-info {
             display: flex;
             align-items: center;
-            gap: 12px;
-            font-size: 12px;
-            color: #999;
-            letter-spacing: 1px;
+            gap: 10px;
+            font-size: 11px;
+            color: #888;
+            letter-spacing: 0.5px;
         }
 
         .file-icon {
-            font-size: 28px;
-            opacity: 0.8;
+            font-size: 24px;
+            opacity: 0.7;
+            flex-shrink: 0;
         }
 
         .file-details {
@@ -394,95 +433,142 @@
         }
         .file-name {
             color: var(--text-bright);
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            letter-spacing: 0.5px;
+            letter-spacing: 0;
         }
         .file-meta {
             color: #555;
-            font-size: 10px;
-            margin-top: 3px;
+            font-size: 9px;
+            margin-top: 2px;
         }
 
         .dl-btn {
             display: block;
             width: 100%;
-            margin-top: 12px;
-            padding: 14px;
+            margin-top: 10px;
+            padding: 0;
+            line-height: 44px;
+            min-height: 44px;
             background: #0a0a0a;
-            border: 1px solid #333;
+            border: 1px solid #2a2a2a;
             color: var(--text-bright);
             font-family: inherit;
-            font-size: 13px;
-            letter-spacing: 3px;
+            font-size: 12px;
+            letter-spacing: 2px;
             text-transform: uppercase;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             text-align: center;
+            -webkit-tap-highlight-color: rgba(255,255,255,0.05);
         }
 
-        .dl-btn:hover {
+        .dl-btn:active {
             background: #111;
             border-color: #fff;
-            box-shadow: 0 0 25px rgba(255,255,255,0.06);
+            box-shadow: 0 0 20px rgba(255,255,255,0.04);
         }
 
         .log-line {
-            font-size: 10px;
+            font-size: 9px;
             color: #444;
-            margin-top: 8px;
-            letter-spacing: 1px;
+            margin-top: 6px;
+            letter-spacing: 0.5px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
+            flex-wrap: wrap;
         }
         .log-line .timestamp {
             color: #333;
+            flex-shrink: 0;
         }
-        .log-line.success {
-            color: #999;
-        }
-        .log-line.error {
-            color: #666;
+        .log-line.success { color: #888; }
+        .log-line.error { color: #666; }
+        .log-line a {
+            color: #777;
+            text-decoration: underline;
+            word-break: break-all;
         }
 
+        /* মোবাইল ডাউনলোড হিন্ট */
+        .mobile-hint {
+            font-size: 8px;
+            color: #333;
+            text-align: center;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            display: none;
+        }
+        .mobile-hint.show {
+            display: block;
+        }
+
+        /* ফুটার */
         .footer {
             position: fixed;
-            bottom: 20px;
-            right: 25px;
+            bottom: 10px;
+            right: 14px;
             z-index: 10;
-            font-size: 10px;
-            color: #2a2a2a;
-            letter-spacing: 3px;
+            font-size: 9px;
+            color: #222;
+            letter-spacing: 2px;
             text-transform: uppercase;
             pointer-events: none;
         }
-
         .footer span {
-            color: #444;
+            color: #3a3a3a;
         }
 
-        @media (max-width: 500px) {
+        /* বড় স্ক্রিনের জন্য অ্যাডজাস্টমেন্ট */
+        @media (min-width: 600px) {
+            body {
+                padding: 20px;
+            }
             .terminal-body {
-                padding: 20px 15px;
+                padding: 28px 24px 24px;
+            }
+            .ascii-logo {
+                font-size: 9px;
+                margin-bottom: 18px;
             }
             .glitch {
-                font-size: 1.5em;
-                letter-spacing: 3px;
+                font-size: 2em;
+                letter-spacing: 6px;
+            }
+            .subtitle {
+                font-size: 9px;
+                margin-bottom: 26px;
+            }
+            .platform-tag {
+                font-size: 9px;
+                padding: 5px 10px;
             }
             .prompt {
-                padding: 14px 10px;
-                font-size: 12px;
+                font-size: 14px;
+                padding: 0 14px;
             }
             .url-input {
-                font-size: 12px;
-                padding: 14px 10px;
+                font-size: 14px;
             }
             .command-btn {
-                font-size: 11px;
-                letter-spacing: 2px;
+                font-size: 13px;
+            }
+            .dl-btn {
+                font-size: 13px;
+            }
+            .footer {
+                bottom: 16px;
+                right: 20px;
+                font-size: 10px;
+            }
+        }
+
+        @media (min-width: 768px) {
+            .container {
+                max-width: 550px;
             }
         }
     </style>
@@ -499,13 +585,16 @@
                 <div class="terminal-dot"></div>
                 <div class="terminal-dot"></div>
                 <div class="terminal-dot"></div>
-                <div class="terminal-title">net_loader_v3.terminal</div>
+                <div class="terminal-title">net_loader_mobile.terminal</div>
             </div>
 
             <div class="terminal-body">
                 <div class="ascii-logo">
-█▄░█ █▀▀ ▀█▀   █░░ █▀█ ▄▀█ █▀▄ █▀▀ █▀█
-█░▀█ ██▄ ░█░   █▄▄ █▄█ █▀█ █▄▀ ██▄ █▀▄
+▄▄▄▄▄ ▄▄▄▄▄ ▄▄▄▄▄
+█   █ █   █   █
+█▄▄▄█ █▄▄▄▀   █
+█   █ █   █   █
+█▄▄▄█ █▄▄▄█   █
                 </div>
 
                 <div class="glitch-wrapper">
@@ -513,43 +602,55 @@
                 </div>
 
                 <div class="subtitle">
-                    [ <span class="blink">▌</span> universal_payload_retriever ]
+                    [ <span class="blink">▌</span> yt · tt · fb · ig ]
+                </div>
+
+                <!-- প্ল্যাটফর্ম ইন্ডিকেটর -->
+                <div class="platform-tags">
+                    <span class="platform-tag">▶ YouTube</span>
+                    <span class="platform-tag">♪ TikTok</span>
+                    <span class="platform-tag">📘 Facebook</span>
+                    <span class="platform-tag">📷 Instagram</span>
                 </div>
 
                 <div class="input-line">
-                    <span class="prompt">root@nex:~$</span>
+                    <span class="prompt">$</span>
                     <input
                         type="text"
                         class="url-input"
                         id="urlInput"
-                        placeholder="paste_target_url_here..."
+                        placeholder="link paste koro..."
                         autocomplete="off"
                         spellcheck="false"
+                        enterkeyhint="go"
                     >
                 </div>
 
                 <button class="command-btn" id="fetchBtn">
-                    <span class="cmd-prompt">></span> execute_fetch
+                    <span class="cmd-prompt">></span> EXTRACT
                 </button>
 
                 <div class="output-area" id="outputArea">
                     <div class="output-header">
                         <span class="status-dot active"></span>
-                        <span>// payload_extracted</span>
+                        <span>// result</span>
                     </div>
                     <div class="output-body">
                         <div class="file-info">
                             <span class="file-icon">📦</span>
                             <div class="file-details">
-                                <div class="file-name" id="fileName">target.file</div>
-                                <div class="file-meta" id="fileMeta">size: unknown | type: auto-detected</div>
+                                <div class="file-name" id="fileName">payload.ext</div>
+                                <div class="file-meta" id="fileMeta">platform: -- | type: --</div>
                             </div>
                         </div>
                         <button class="dl-btn" id="dlBtn">
-                            [ DOWNLOAD_PAYLOAD ]
+                            [ DOWNLOAD ]
                         </button>
+                        <div class="mobile-hint" id="mobileHint">
+                            ⚡ long press kore "Download Link" select koro
+                        </div>
                         <div class="log-line success" id="logLine">
-                            <span class="timestamp">[OK]</span> payload ready for extraction...
+                            <span class="timestamp">[OK]</span> ready...
                         </div>
                     </div>
                 </div>
@@ -560,7 +661,12 @@
     <div class="footer">Made By <span>Nex</span></div>
 
     <script>
-        // ========== ম্যাট্রিক্স রেইন (গ্রেস্কেল) ==========
+        // ========== মোবাইল ডিটেক্ট ==========
+        const isMobile = /Android|iPhone|iPad|iPod|webOS/i.test(navigator.userAgent) || window.innerWidth < 600;
+        const mobileHint = document.getElementById('mobileHint');
+        if (isMobile) mobileHint.classList.add('show');
+
+        // ========== ম্যাট্রিক্স রেইন ==========
         (function matrixRain() {
             const canvas = document.getElementById('matrixCanvas');
             const ctx = canvas.getContext('2d');
@@ -570,12 +676,12 @@
             }
             resize();
             window.addEventListener('resize', resize);
-            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
-            const fontSize = 14;
+            const chars = '01';
+            const fontSize = isMobile ? 12 : 14;
             const columns = Math.floor(canvas.width / fontSize);
             const drops = new Array(columns).fill(0);
             function draw() {
-                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.04)';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.font = fontSize + 'px "Courier New", monospace';
                 for (let i = 0; i < drops.length; i++) {
@@ -583,15 +689,15 @@
                     const x = i * fontSize;
                     const y = drops[i] * fontSize;
                     const brightness = Math.random();
-                    if (brightness > 0.7) ctx.fillStyle = '#ffffff';
-                    else if (brightness > 0.4) ctx.fillStyle = '#888888';
-                    else ctx.fillStyle = '#333333';
+                    if (brightness > 0.75) ctx.fillStyle = '#ffffff';
+                    else if (brightness > 0.45) ctx.fillStyle = '#777777';
+                    else ctx.fillStyle = '#2a2a2a';
                     ctx.fillText(text, x, y);
                     if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
                     drops[i]++;
                 }
             }
-            setInterval(draw, 40);
+            setInterval(draw, 45);
         })();
 
         // ========== DOM ==========
@@ -603,352 +709,488 @@
         const dlBtn = document.getElementById('dlBtn');
         const logLine = document.getElementById('logLine');
         let currentDownloadUrl = null;
+        let currentPlatform = '';
 
         // ========== প্ল্যাটফর্ম ডিটেক্ট ==========
         function detectPlatform(url) {
             const u = url.toLowerCase();
-            if (u.includes('tiktok.com') || u.includes('vm.tiktok') || u.includes('vt.tiktok')) return 'tiktok';
-            if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
-            if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com/video') || u.includes('fb.com/reel')) return 'facebook';
+            if (u.includes('tiktok.com') || u.includes('vm.tiktok') || u.includes('vt.tiktok') || u.includes('m.tiktok')) return 'tiktok';
+            if (u.includes('youtube.com') || u.includes('youtu.be') || u.includes('m.youtube')) return 'youtube';
+            if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com/video') || u.includes('fb.com/reel') || u.includes('fb.com/share')) return 'facebook';
+            if (u.includes('instagram.com') || u.includes('instagr.am')) return 'instagram';
             return 'unknown';
         }
 
-        // ========== CORS প্রক্সি লিস্ট ==========
-        const CORS_PROXIES = [
-            'https://corsproxy.io/?',
-            'https://api.allorigins.win/raw?url=',
-            'https://thingproxy.freeboard.io/fetch/',
-        ];
-
-        async function fetchWithProxy(url, proxyIndex = 0) {
-            if (proxyIndex >= CORS_PROXIES.length) {
-                throw new Error('all_proxies_failed');
-            }
-            const proxyUrl = CORS_PROXIES[proxyIndex] + encodeURIComponent(url);
+        // ========== হেল্পার: ফেচ উইথ টাইমআউট ==========
+        async function fetchWithTimeout(url, options = {}, timeout = 12000) {
+            const controller = new AbortController();
+            const id = setTimeout(() => controller.abort(), timeout);
             try {
-                const res = await fetch(proxyUrl, { 
-                    signal: AbortSignal.timeout(15000)
-                });
-                if (!res.ok) throw new Error('proxy_http_error');
+                const res = await fetch(url, { ...options, signal: controller.signal });
+                clearTimeout(id);
                 return res;
             } catch (e) {
-                return fetchWithProxy(url, proxyIndex + 1);
+                clearTimeout(id);
+                throw e;
             }
         }
 
-        // ========== টিকটক API ==========
-        async function fetchTikTok(url) {
-            // tikwm.com API - সবচেয়ে নির্ভরযোগ্য
-            const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
-            
-            try {
-                // প্রথমে সরাসরি ট্রাই
-                let res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
-                if (!res.ok) {
-                    // প্রক্সি দিয়ে ট্রাই
-                    res = await fetchWithProxy(apiUrl);
+        // ========== CORS প্রক্সি দিয়ে ফেচ ==========
+        const CORS_PROXIES = [
+            (url) => 'https://corsproxy.io/?' + encodeURIComponent(url),
+            (url) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url),
+        ];
+
+        async function fetchViaProxy(targetUrl, timeout = 12000) {
+            for (let i = 0; i < CORS_PROXIES.length; i++) {
+                try {
+                    const proxyUrl = CORS_PROXIES[i](targetUrl);
+                    const res = await fetchWithTimeout(proxyUrl, {}, timeout);
+                    if (res.ok) return res;
+                } catch (e) {
+                    continue;
                 }
+            }
+            throw new Error('all_proxies_failed');
+        }
+
+        // ========== টিকটক ==========
+        async function fetchTikTok(url) {
+            // API 1: tikwm.com (সবচেয়ে নির্ভরযোগ্য)
+            try {
+                const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+                const res = await fetchWithTimeout(apiUrl, {}, 10000);
                 const data = await res.json();
                 if (data.code === 0 && data.data) {
                     const dl = data.data.hdplay || data.data.play || data.data.wmplay;
-                    return {
+                    if (dl) return {
                         url: dl,
-                        title: data.data.title || 'TikTok Video',
+                        title: data.data.title || 'TikTok',
                         type: 'video/mp4',
                         platform: 'TikTok',
-                        thumbnail: data.data.cover || '',
                     };
                 }
-                throw new Error('tikwm_failed');
-            } catch (e) {
-                // ফলব্যাক: tikcdn.io API
-                try {
-                    const res2 = await fetch(`https://tikcdn.io/api?url=${encodeURIComponent(url)}`, {
-                        signal: AbortSignal.timeout(10000)
-                    });
-                    const d2 = await res2.json();
-                    if (d2.videoUrl) {
-                        return {
-                            url: d2.videoUrl,
-                            title: d2.title || 'TikTok Video',
-                            type: 'video/mp4',
-                            platform: 'TikTok',
-                            thumbnail: d2.thumbnail || '',
-                        };
-                    }
-                } catch (e2) {}
-                throw new Error('tiktok_all_apis_failed');
-            }
+            } catch (e) { console.warn('tikwm:', e.message); }
+
+            // API 2: tikcdn.io
+            try {
+                const apiUrl = `https://tikcdn.io/api?url=${encodeURIComponent(url)}`;
+                const res = await fetchWithTimeout(apiUrl, {}, 10000);
+                const d = await res.json();
+                if (d.videoUrl) return {
+                    url: d.videoUrl,
+                    title: d.title || 'TikTok',
+                    type: 'video/mp4',
+                    platform: 'TikTok',
+                };
+            } catch (e) { console.warn('tikcdn:', e.message); }
+
+            // API 3: tikmate
+            try {
+                const apiUrl = `https://tikmate.app/api?url=${encodeURIComponent(url)}`;
+                const res = await fetchWithTimeout(apiUrl, {}, 10000);
+                const d = await res.json();
+                if (d.videoUrl || d.url) return {
+                    url: d.videoUrl || d.url,
+                    title: d.title || 'TikTok',
+                    type: 'video/mp4',
+                    platform: 'TikTok',
+                };
+            } catch (e) { console.warn('tikmate:', e.message); }
+
+            throw new Error('tiktok_all_failed');
         }
 
-        // ========== ইউটিউব API ==========
+        // ========== ইউটিউব ==========
         async function fetchYouTube(url) {
-            // cobalt API ইউটিউবের জন্য ভালো কাজ করে
-            const apis = [
-                {
-                    name: 'cobalt',
-                    fetch: async () => {
-                        const res = await fetch('https://api.cobalt.tools/api/json', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                            body: JSON.stringify({
-                                url: url,
-                                vQuality: '720',
-                                aFormat: 'mp3',
-                                isAudioOnly: false,
-                                isNoTTWatermark: true,
-                            }),
-                            signal: AbortSignal.timeout(15000),
-                        });
-                        if (!res.ok) throw new Error('cobalt_http_error');
-                        const data = await res.json();
-                        if (data.status === 'error' || data.error) throw new Error(data.error || 'cobalt_error');
-                        let dl = data.url;
-                        if (data.picker && data.picker.length > 0) {
-                            dl = data.picker[data.picker.length - 1].url || data.url;
-                        }
-                        return {
-                            url: dl,
-                            title: data.title || 'YouTube Video',
-                            type: 'video/mp4',
-                            platform: 'YouTube',
-                            thumbnail: data.thumb || '',
-                        };
-                    }
-                },
-                {
-                    name: 'loader_to',
-                    fetch: async () => {
-                        const res = await fetch(`https://loader.to/api/card/?url=${encodeURIComponent(url)}&format=mp4`, {
-                            signal: AbortSignal.timeout(15000),
-                        });
-                        const d = await res.json();
-                        if (d.success && d.url) {
-                            return {
-                                url: d.url,
-                                title: d.title || 'YouTube Video',
-                                type: 'video/mp4',
-                                platform: 'YouTube',
-                                thumbnail: d.thumbnail || '',
-                            };
-                        }
-                        throw new Error('loader_to_failed');
-                    }
-                },
-            ];
-
-            for (const api of apis) {
-                try {
-                    return await api.fetch();
-                } catch (e) {
-                    console.warn(`[${api.name}] failed:`, e.message);
+            // API 1: cobalt
+            try {
+                const res = await fetchWithTimeout('https://api.cobalt.tools/api/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        vQuality: '720',
+                        aFormat: 'best',
+                        isAudioOnly: false,
+                        isNoTTWatermark: true,
+                    }),
+                }, 12000);
+                const data = await res.json();
+                if (data.status === 'error' || data.error) throw new Error(data.error);
+                let dl = data.url;
+                if (data.picker && data.picker.length > 0) {
+                    dl = data.picker[data.picker.length - 1].url || data.url;
                 }
-            }
+                if (dl) return {
+                    url: dl,
+                    title: data.title || 'YouTube',
+                    type: 'video/mp4',
+                    platform: 'YouTube',
+                };
+            } catch (e) { console.warn('cobalt_yt:', e.message); }
 
-            // আল্টিমেট ফলব্যাক: savefrom.net এর মাধ্যমে ওপেন
-            throw new Error('youtube_all_apis_failed|https://en.savefrom.net/1-youtube-video-downloader-1/?url=' + encodeURIComponent(url));
+            // API 2: loader.to
+            try {
+                const res = await fetchWithTimeout(`https://loader.to/api/card/?url=${encodeURIComponent(url)}&format=mp4`, {}, 12000);
+                const d = await res.json();
+                if (d.success && d.url) return {
+                    url: d.url,
+                    title: d.title || 'YouTube',
+                    type: 'video/mp4',
+                    platform: 'YouTube',
+                };
+            } catch (e) { console.warn('loader_to:', e.message); }
+
+            // API 3: yt-dl api
+            try {
+                const res = await fetchWithTimeout(`https://api.yt-dl.org/api/youtube?url=${encodeURIComponent(url)}`, {}, 10000);
+                const d = await res.json();
+                if (d.url || d.downloadUrl) return {
+                    url: d.url || d.downloadUrl,
+                    title: d.title || 'YouTube',
+                    type: 'video/mp4',
+                    platform: 'YouTube',
+                };
+            } catch (e) { console.warn('yt-dl:', e.message); }
+
+            throw new Error('youtube_all_failed');
         }
 
-        // ========== ফেসবুক API ==========
+        // ========== ফেসবুক (ইমপ্রুভড) ==========
         async function fetchFacebook(url) {
-            const apis = [
-                {
-                    name: 'fbdown_net',
-                    fetch: async () => {
-                        // fbdown.net পাবলিক API প্যাটার্ন
-                        const apiUrl = `https://fbdown.net/api/download?url=${encodeURIComponent(url)}`;
-                        let res;
-                        try {
-                            res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
-                        } catch {
-                            res = await fetchWithProxy(apiUrl);
-                        }
-                        const data = await res.json();
-                        if (data.success && (data.hd || data.sd || data.url)) {
-                            const dl = data.hd || data.sd || data.url;
-                            return {
-                                url: dl,
-                                title: data.title || 'Facebook Video',
-                                type: 'video/mp4',
-                                platform: 'Facebook',
-                                thumbnail: data.thumbnail || '',
-                            };
-                        }
-                        throw new Error('fbdown_failed');
-                    }
-                },
-                {
-                    name: 'fbdownloader_app',
-                    fetch: async () => {
-                        const apiUrl = `https://fbdownloader.app/api?url=${encodeURIComponent(url)}`;
-                        let res;
-                        try {
-                            res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
-                        } catch {
-                            res = await fetchWithProxy(apiUrl);
-                        }
-                        const d = await res.json();
-                        if (d.downloadUrl || d.url) {
-                            return {
-                                url: d.downloadUrl || d.url,
-                                title: d.title || 'Facebook Video',
-                                type: 'video/mp4',
-                                platform: 'Facebook',
-                                thumbnail: d.thumbnail || '',
-                            };
-                        }
-                        throw new Error('fbdownloader_failed');
-                    }
-                },
-                {
-                    name: 'cobalt_fb',
-                    fetch: async () => {
-                        const res = await fetch('https://api.cobalt.tools/api/json', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                            body: JSON.stringify({
-                                url: url,
-                                vQuality: '720',
-                                aFormat: 'best',
-                                isAudioOnly: false,
-                                isNoTTWatermark: true,
-                            }),
-                            signal: AbortSignal.timeout(15000),
-                        });
-                        if (!res.ok) throw new Error('cobalt_fb_http_error');
-                        const data = await res.json();
-                        if (data.status === 'error' || data.error) throw new Error(data.error || 'cobalt_fb_error');
-                        let dl = data.url;
-                        if (data.picker && data.picker.length > 0) {
-                            dl = data.picker[data.picker.length - 1].url || data.url;
-                        }
-                        return {
-                            url: dl,
-                            title: data.title || 'Facebook Video',
-                            type: 'video/mp4',
-                            platform: 'Facebook',
-                            thumbnail: data.thumb || '',
-                        };
-                    }
-                },
-            ];
-
-            for (const api of apis) {
+            // API 1: fbdown.net
+            try {
+                const apiUrl = `https://fbdown.net/api/download?url=${encodeURIComponent(url)}`;
+                let res;
                 try {
-                    return await api.fetch();
-                } catch (e) {
-                    console.warn(`[${api.name}] failed:`, e.message);
+                    res = await fetchWithTimeout(apiUrl, {}, 10000);
+                } catch {
+                    res = await fetchViaProxy(apiUrl, 12000);
                 }
-            }
+                const data = await res.json();
+                if (data.success && (data.hd || data.sd || data.url)) {
+                    const dl = data.hd || data.sd || data.url;
+                    if (dl) return {
+                        url: dl,
+                        title: data.title || 'Facebook',
+                        type: 'video/mp4',
+                        platform: 'Facebook',
+                    };
+                }
+            } catch (e) { console.warn('fbdown:', e.message); }
 
-            throw new Error('facebook_all_apis_failed|https://www.fbdown.net/download.php?url=' + encodeURIComponent(url));
+            // API 2: Direct HTML parse via proxy (Facebook page theke video URL extract)
+            try {
+                const pageRes = await fetchViaProxy(url, 15000);
+                const html = await pageRes.text();
+                
+                // Facebook video URL patterns
+                const patterns = [
+                    /"playable_url":"([^"]+)"/g,
+                    /"playable_url_quality_hd":"([^"]+)"/g,
+                    /"browser_native_hd_url":"([^"]+)"/g,
+                    /"browser_native_sd_url":"([^"]+)"/g,
+                    /hd_src:"([^"]+)"/g,
+                    /sd_src:"([^"]+)"/g,
+                    /<meta property="og:video:secure_url" content="([^"]+)"/g,
+                    /<meta property="og:video" content="([^"]+)"/g,
+                    /"videoURL":"([^"]+)"/g,
+                ];
+
+                let bestUrl = null;
+                for (const pattern of patterns) {
+                    let match;
+                    while ((match = pattern.exec(html)) !== null) {
+                        const foundUrl = match[1].replace(/\\/g, '');
+                        if (foundUrl && (foundUrl.includes('.mp4') || foundUrl.includes('video'))) {
+                            // HD প্রেফার করবো
+                            if (foundUrl.includes('hd') || foundUrl.includes('_hd_')) {
+                                bestUrl = foundUrl;
+                                break;
+                            }
+                            if (!bestUrl) bestUrl = foundUrl;
+                        }
+                    }
+                    if (bestUrl && bestUrl.includes('hd')) break;
+                }
+
+                if (bestUrl) {
+                    return {
+                        url: bestUrl,
+                        title: 'Facebook Video',
+                        type: 'video/mp4',
+                        platform: 'Facebook',
+                    };
+                }
+            } catch (e) { console.warn('fb_parse:', e.message); }
+
+            // API 3: cobalt (fallback)
+            try {
+                const res = await fetchWithTimeout('https://api.cobalt.tools/api/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        vQuality: '720',
+                        aFormat: 'best',
+                        isAudioOnly: false,
+                        isNoTTWatermark: true,
+                    }),
+                }, 12000);
+                const data = await res.json();
+                if (!data.error && data.url) {
+                    let dl = data.url;
+                    if (data.picker && data.picker.length > 0) {
+                        dl = data.picker[data.picker.length - 1].url || data.url;
+                    }
+                    if (dl) return {
+                        url: dl,
+                        title: data.title || 'Facebook',
+                        type: 'video/mp4',
+                        platform: 'Facebook',
+                    };
+                }
+            } catch (e) { console.warn('cobalt_fb:', e.message); }
+
+            // API 4: fbdownloader.app
+            try {
+                const apiUrl = `https://fbdownloader.app/api?url=${encodeURIComponent(url)}`;
+                let res;
+                try {
+                    res = await fetchWithTimeout(apiUrl, {}, 10000);
+                } catch {
+                    res = await fetchViaProxy(apiUrl, 10000);
+                }
+                const d = await res.json();
+                if (d.downloadUrl || d.url) return {
+                    url: d.downloadUrl || d.url,
+                    title: d.title || 'Facebook',
+                    type: 'video/mp4',
+                    platform: 'Facebook',
+                };
+            } catch (e) { console.warn('fbapp:', e.message); }
+
+            // ফলব্যাক: এক্সটার্নাল লিংক
+            const extUrl = 'https://www.fbdown.net/download.php?url=' + encodeURIComponent(url);
+            throw new Error('facebook_all_failed|' + extUrl);
         }
 
-        // ========== মেইন ফেচ হ্যান্ডলার ==========
+        // ========== ইনস্টাগ্রাম ==========
+        async function fetchInstagram(url) {
+            // API 1: saveig.app type
+            try {
+                const apiUrl = `https://v3.saveig.app/api/ig/story?url=${encodeURIComponent(url)}`;
+                const res = await fetchWithTimeout(apiUrl, {}, 10000);
+                const d = await res.json();
+                if (d.result && d.result.length > 0) {
+                    const item = d.result[0];
+                    const dl = item.video_url || item.image_url || item.url;
+                    if (dl) return {
+                        url: dl,
+                        title: item.username || 'Instagram',
+                        type: dl.includes('.mp4') ? 'video/mp4' : 'image/jpeg',
+                        platform: 'Instagram',
+                    };
+                }
+            } catch (e) { console.warn('saveig:', e.message); }
+
+            // API 2: igdownloader
+            try {
+                const apiUrl = `https://igdownloader.app/api?url=${encodeURIComponent(url)}`;
+                let res;
+                try {
+                    res = await fetchWithTimeout(apiUrl, {}, 10000);
+                } catch {
+                    res = await fetchViaProxy(apiUrl, 10000);
+                }
+                const d = await res.json();
+                if (d.url || d.downloadUrl) return {
+                    url: d.url || d.downloadUrl,
+                    title: d.username || 'Instagram',
+                    type: 'video/mp4',
+                    platform: 'Instagram',
+                };
+            } catch (e) { console.warn('igdown:', e.message); }
+
+            // API 3: Direct page parse via proxy
+            try {
+                const pageRes = await fetchViaProxy(url, 12000);
+                const html = await pageRes.text();
+                
+                const patterns = [
+                    /"video_url":"([^"]+)"/g,
+                    /"display_url":"([^"]+)"/g,
+                    /<meta property="og:video" content="([^"]+)"/g,
+                    /<meta property="og:image" content="([^"]+)"/g,
+                    /"video_versions":\[.*?"url":"([^"]+)"/g,
+                ];
+
+                let bestUrl = null;
+                for (const pattern of patterns) {
+                    const match = pattern.exec(html);
+                    if (match) {
+                        const found = match[1].replace(/\\u0026/g, '&').replace(/\\/g, '');
+                        if (found && found.startsWith('http')) {
+                            if (found.includes('video') || found.includes('.mp4')) {
+                                bestUrl = found;
+                                break;
+                            }
+                            if (!bestUrl) bestUrl = found;
+                        }
+                    }
+                }
+
+                if (bestUrl) return {
+                    url: bestUrl,
+                    title: 'Instagram',
+                    type: bestUrl.includes('.mp4') ? 'video/mp4' : 'image/jpeg',
+                    platform: 'Instagram',
+                };
+            } catch (e) { console.warn('ig_parse:', e.message); }
+
+            // API 4: cobalt
+            try {
+                const res = await fetchWithTimeout('https://api.cobalt.tools/api/json', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({
+                        url: url,
+                        vQuality: '720',
+                        aFormat: 'best',
+                        isAudioOnly: false,
+                        isNoTTWatermark: true,
+                    }),
+                }, 12000);
+                const data = await res.json();
+                if (!data.error && data.url) {
+                    let dl = data.url;
+                    if (data.picker && data.picker.length > 0) {
+                        dl = data.picker[data.picker.length - 1].url || data.url;
+                    }
+                    if (dl) return {
+                        url: dl,
+                        title: data.title || 'Instagram',
+                        type: 'video/mp4',
+                        platform: 'Instagram',
+                    };
+                }
+            } catch (e) { console.warn('cobalt_ig:', e.message); }
+
+            const extUrl = 'https://saveig.app/?url=' + encodeURIComponent(url);
+            throw new Error('instagram_all_failed|' + extUrl);
+        }
+
+        // ========== মেইন হ্যান্ডলার ==========
         async function handleFetch() {
             const url = urlInput.value.trim();
 
             if (!url) {
-                logLine.innerHTML = '<span class="timestamp">[ERR]</span> no target url provided...';
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> link dao...';
                 logLine.className = 'log-line error';
                 outputArea.classList.add('show');
                 return;
             }
 
-            try {
-                new URL(url);
-            } catch (e) {
-                logLine.innerHTML = '<span class="timestamp">[ERR]</span> invalid url format...';
+            try { new URL(url); } catch (e) {
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> invalid url...';
                 logLine.className = 'log-line error';
                 outputArea.classList.add('show');
                 return;
             }
 
             const platform = detectPlatform(url);
+            currentPlatform = platform;
 
             if (platform === 'unknown') {
-                logLine.innerHTML = '<span class="timestamp">[ERR]</span> unsupported platform | only: YT/TT/FB...';
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> YT/TT/FB/IG only...';
                 logLine.className = 'log-line error';
                 outputArea.classList.add('show');
                 return;
             }
 
+            // প্ল্যাটফর্ম ট্যাগ হাইলাইট
+            document.querySelectorAll('.platform-tag').forEach(t => t.classList.remove('active'));
+            const tags = document.querySelectorAll('.platform-tag');
+            const tagMap = { youtube: 0, tiktok: 1, facebook: 2, instagram: 3 };
+            if (tags[tagMap[platform]]) tags[tagMap[platform]].classList.add('active');
+
             fetchBtn.disabled = true;
-            fetchBtn.innerHTML = '<span class="spinner"></span> extracting_from_' + platform + '...';
+            fetchBtn.innerHTML = '<span class="spinner"></span> ' + platform.toUpperCase();
             outputArea.classList.remove('show');
+            mobileHint.classList.remove('show');
             currentDownloadUrl = null;
 
             try {
                 let result;
-
-                if (platform === 'tiktok') {
-                    result = await fetchTikTok(url);
-                } else if (platform === 'youtube') {
-                    result = await fetchYouTube(url);
-                } else if (platform === 'facebook') {
-                    result = await fetchFacebook(url);
+                switch (platform) {
+                    case 'tiktok': result = await fetchTikTok(url); break;
+                    case 'youtube': result = await fetchYouTube(url); break;
+                    case 'facebook': result = await fetchFacebook(url); break;
+                    case 'instagram': result = await fetchInstagram(url); break;
                 }
 
-                if (!result || !result.url) {
-                    throw new Error('no_download_url_extracted');
-                }
+                if (!result || !result.url) throw new Error('no_url');
 
                 currentDownloadUrl = result.url;
-
-                const cleanTitle = (result.title || 'payload').replace(/[^a-zA-Z0-9\u0980-\u09FF\s\-_]/g, '').substring(0, 40);
-                const ext = result.type === 'audio/mpeg' ? '.mp3' : '.mp4';
+                const cleanTitle = (result.title || 'payload').substring(0, 35);
+                const ext = result.type.includes('mp4') ? '.mp4' : result.type.includes('jpeg') ? '.jpg' : '.mp4';
                 fileName.textContent = cleanTitle + ext;
-                fileMeta.textContent = `platform: ${result.platform} | type: ${result.type}`;
-
-                logLine.innerHTML = `<span class="timestamp">[OK]</span> ${result.platform} payload extracted | ready`;
+                fileMeta.textContent = platform.toUpperCase() + ' | ' + (result.type.includes('mp4') ? 'video' : 'image');
+                logLine.innerHTML = '<span class="timestamp">[OK]</span> ' + platform + ' ready';
                 logLine.className = 'log-line success';
+                dlBtn.textContent = '[ DOWNLOAD ]';
                 outputArea.classList.add('show');
+                if (isMobile) mobileHint.classList.add('show');
 
             } catch (err) {
-                console.error('Fetch error:', err);
-                const errMsg = err.message || 'extraction_failed';
-
-                // যদি ফলব্যাক URL থাকে (| দিয়ে সেপারেটেড)
+                console.error('Extract error:', err);
+                const errMsg = err.message || 'failed';
+                
                 if (errMsg.includes('|')) {
                     const parts = errMsg.split('|');
-                    const fallbackUrl = parts[1];
-                    logLine.innerHTML = `<span class="timestamp">[WARN]</span> direct extraction failed. <a href="${fallbackUrl}" target="_blank" style="color:#888;text-decoration:underline;">open_external_service</a>`;
-                    logLine.className = 'log-line error';
-                    currentDownloadUrl = fallbackUrl;
-                    fileName.textContent = 'external_download_link';
-                    fileMeta.textContent = 'click download to open external service';
-                    dlBtn.textContent = '[ OPEN_EXTERNAL ]';
+                    const extUrl = parts[1];
+                    currentDownloadUrl = extUrl;
+                    fileName.textContent = 'external_service';
+                    fileMeta.textContent = 'click to open external page';
+                    dlBtn.textContent = '[ OPEN EXTERNAL ]';
+                    logLine.innerHTML = `<span class="timestamp">[WARN]</span> <a href="${extUrl}" target="_blank">open external →</a>`;
                 } else {
-                    logLine.innerHTML = '<span class="timestamp">[ERR]</span> ' + errMsg.substring(0, 60);
-                    logLine.className = 'log-line error';
+                    logLine.innerHTML = '<span class="timestamp">[ERR]</span> ' + errMsg.substring(0, 50);
+                    currentDownloadUrl = null;
                 }
+                logLine.className = 'log-line error';
                 outputArea.classList.add('show');
             } finally {
                 fetchBtn.disabled = false;
-                fetchBtn.innerHTML = '<span class="cmd-prompt">></span> execute_fetch';
-                dlBtn.textContent = currentDownloadUrl && currentDownloadUrl.startsWith('http') ? 
-                    '[ DOWNLOAD_PAYLOAD ]' : '[ OPEN_EXTERNAL ]';
+                fetchBtn.innerHTML = '<span class="cmd-prompt">></span> EXTRACT';
             }
         }
 
-        // ========== ইভেন্ট লিসেনার ==========
-        fetchBtn.addEventListener('click', handleFetch);
-
+        // ========== ডাউনলোড বাটন ==========
         dlBtn.addEventListener('click', () => {
             if (!currentDownloadUrl) {
-                logLine.innerHTML = '<span class="timestamp">[ERR]</span> no payload in memory...';
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> no payload...';
                 logLine.className = 'log-line error';
                 return;
             }
 
+            if (currentDownloadUrl.includes('fbdown.net') || currentDownloadUrl.includes('saveig.app')) {
+                // এক্সটার্নাল সার্ভিস - নতুন ট্যাবে ওপেন
+                window.open(currentDownloadUrl, '_blank', 'noopener,noreferrer');
+                logLine.innerHTML = '<span class="timestamp">[>>]</span> external opened...';
+                logLine.className = 'log-line success';
+                return;
+            }
+
+            // ডিরেক্ট ডাউনলোড
             const a = document.createElement('a');
             a.href = currentDownloadUrl;
             a.target = '_blank';
             a.rel = 'noopener noreferrer';
             try {
                 const urlObj = new URL(currentDownloadUrl);
-                const fname = urlObj.pathname.split('/').pop() || 'payload.mp4';
-                a.download = fname;
+                a.download = urlObj.pathname.split('/').pop() || 'netloader.mp4';
             } catch (e) {
                 a.download = 'netloader_payload.mp4';
             }
@@ -956,20 +1198,44 @@
             a.click();
             document.body.removeChild(a);
 
-            logLine.innerHTML = '<span class="timestamp">[>>]</span> download initiated...';
+            logLine.innerHTML = '<span class="timestamp">[>>]</span> download start...';
             logLine.className = 'log-line success';
+            if (isMobile) mobileHint.classList.add('show');
         });
 
+        // ========== এন্টার ==========
         urlInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') handleFetch();
         });
 
+        // ========== অটো-পেস্ট (মোবাইলে ক্লিপবোর্ড থেকে) ==========
+        urlInput.addEventListener('focus', async () => {
+            if (isMobile && !urlInput.value) {
+                try {
+                    const clipText = await navigator.clipboard.readText();
+                    if (clipText && (clipText.includes('youtube') || clipText.includes('tiktok') || 
+                        clipText.includes('facebook') || clipText.includes('instagram') ||
+                        clipText.includes('youtu.be') || clipText.includes('fb.'))) {
+                        urlInput.value = clipText;
+                        logLine.innerHTML = '<span class="timestamp">[>>]</span> link auto-pasted from clipboard...';
+                        logLine.className = 'log-line success';
+                        outputArea.classList.add('show');
+                        setTimeout(() => {
+                            if (outputArea.classList.contains('show') && logLine.textContent.includes('clipboard')) {
+                                outputArea.classList.remove('show');
+                            }
+                        }, 2000);
+                    }
+                } catch (e) {}
+            }
+        });
+
         urlInput.focus();
 
-        console.log('%c[ NET LOADER v3 ]%c // multi-api engine // FB | TT | YT // Made By Nex',
-            'color:#fff;font-weight:bold;', 'color:#888;');
-        console.log('%c[ READY ]%c paste facebook/tiktok/youtube url...',
-            'color:#fff;', 'color:#666;');
+        // ========== কনসোল সিগনেচার ==========
+        console.log('%c[ NET LOADER MOBILE ]%c YT · TT · FB · IG %c// Made By Nex',
+            'color:#fff;font-weight:bold;font-size:14px;', 'color:#888;', 'color:#444;font-size:10px;');
+        console.log('%c[ READY ]%c paste any link...', 'color:#fff;', 'color:#666;');
     </script>
 </body>
 </html>
