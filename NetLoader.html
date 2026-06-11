@@ -1,0 +1,975 @@
+
+```html
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Loader // NEX</title>
+    <style>
+        :root {
+            --bg: #000000;
+            --surface: #0a0a0a;
+            --border: #1a1a1a;
+            --text: #c0c0c0;
+            --text-bright: #ffffff;
+            --text-dim: #666666;
+            --accent: #ffffff;
+            --glow: rgba(255, 255, 255, 0.08);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Courier New', 'Fira Code', 'Consolas', 'Monaco', monospace;
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+            user-select: none;
+        }
+
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent,
+                transparent 2px,
+                rgba(0, 0, 0, 0.08) 2px,
+                rgba(0, 0, 0, 0.08) 4px
+            );
+        }
+
+        .noise {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99;
+            opacity: 0.03;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            background-size: 200px 200px;
+        }
+
+        #matrixCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.15;
+        }
+
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .terminal {
+            background: rgba(10, 10, 10, 0.85);
+            border: 1px solid var(--border);
+            border-radius: 2px;
+            box-shadow: 
+                0 0 0 1px rgba(255,255,255,0.03),
+                0 20px 60px rgba(0,0,0,0.8),
+                inset 0 0 100px rgba(255,255,255,0.005);
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: #0d0d0d;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .terminal-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            border: 1px solid #333;
+            background: #1a1a1a;
+        }
+        .terminal-dot:nth-child(1) { background: #333; }
+        .terminal-dot:nth-child(2) { background: #333; }
+        .terminal-dot:nth-child(3) { background: #333; }
+
+        .terminal-title {
+            flex: 1;
+            text-align: center;
+            font-size: 11px;
+            color: #444;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .terminal-body {
+            padding: 30px 25px 25px;
+        }
+
+        .ascii-logo {
+            text-align: center;
+            font-size: 10px;
+            line-height: 1.1;
+            color: #555;
+            margin-bottom: 20px;
+            white-space: pre;
+            letter-spacing: 0;
+            animation: flickerText 4s infinite;
+        }
+
+        @keyframes flickerText {
+            0%, 100% { opacity: 1; }
+            8% { opacity: 0.7; }
+            10% { opacity: 1; }
+            30% { opacity: 0.85; }
+            33% { opacity: 1; }
+            55% { opacity: 0.6; }
+            57% { opacity: 1; }
+            92% { opacity: 0.8; }
+            94% { opacity: 1; }
+        }
+
+        .glitch-wrapper {
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .glitch {
+            font-size: 2.2em;
+            font-weight: bold;
+            color: var(--text-bright);
+            letter-spacing: 6px;
+            position: relative;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+
+        .glitch::before,
+        .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.6;
+        }
+
+        .glitch::before {
+            color: #888;
+            z-index: -1;
+            animation: glitchAnim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) both infinite;
+            clip-path: polygon(0 0, 100% 0, 100% 35%, 0 35%);
+        }
+
+        .glitch::after {
+            color: #444;
+            z-index: -2;
+            animation: glitchAnim 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) reverse both infinite;
+            clip-path: polygon(0 65%, 100% 65%, 100% 100%, 0 100%);
+        }
+
+        @keyframes glitchAnim {
+            0% { transform: translate(0); }
+            20% { transform: translate(-3px, 2px); }
+            40% { transform: translate(3px, -1px); }
+            60% { transform: translate(-1px, -2px); }
+            80% { transform: translate(2px, 1px); }
+            100% { transform: translate(0); }
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 10px;
+            color: #444;
+            letter-spacing: 3px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .subtitle .blink {
+            animation: blink 1s step-end infinite;
+            color: #666;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .input-line {
+            display: flex;
+            align-items: center;
+            background: #050505;
+            border: 1px solid var(--border);
+            border-radius: 1px;
+            padding: 0;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+
+        .input-line:focus-within {
+            border-color: #444;
+            box-shadow: 0 0 20px var(--glow);
+        }
+
+        .prompt {
+            padding: 16px 14px;
+            color: #555;
+            font-size: 14px;
+            font-weight: bold;
+            border-right: 1px solid #1a1a1a;
+            background: #0a0a0a;
+            letter-spacing: 2px;
+        }
+
+        .url-input {
+            flex: 1;
+            padding: 16px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-bright);
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            letter-spacing: 1px;
+            caret-color: #fff;
+        }
+
+        .url-input::placeholder {
+            color: #333;
+            letter-spacing: 1px;
+        }
+
+        .url-input:focus::placeholder {
+            color: #444;
+        }
+
+        .command-btn {
+            width: 100%;
+            margin-top: 15px;
+            padding: 16px;
+            background: #0f0f0f;
+            border: 1px solid #222;
+            color: var(--text-bright);
+            font-family: inherit;
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .command-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .command-btn:hover::before {
+            left: 100%;
+        }
+
+        .command-btn:hover {
+            background: #1a1a1a;
+            border-color: #555;
+            box-shadow: 0 0 30px rgba(255,255,255,0.05);
+        }
+
+        .command-btn:active {
+            background: #000;
+            border-color: #fff;
+        }
+
+        .command-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .command-btn .cmd-prompt {
+            color: #555;
+            margin-right: 6px;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #333;
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .output-area {
+            margin-top: 20px;
+            border: 1px solid var(--border);
+            background: #050505;
+            border-radius: 1px;
+            display: none;
+        }
+
+        .output-area.show {
+            display: block;
+        }
+
+        .output-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            border-bottom: 1px solid #1a1a1a;
+            font-size: 10px;
+            color: #555;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .output-header .status-dot {
+            width: 7px;
+            height: 7px;
+            background: #555;
+            border-radius: 50%;
+        }
+        .output-header .status-dot.active {
+            background: #fff;
+            box-shadow: 0 0 6px #fff;
+        }
+
+        .output-body {
+            padding: 14px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 12px;
+            color: #999;
+            letter-spacing: 1px;
+        }
+
+        .file-icon {
+            font-size: 28px;
+            opacity: 0.8;
+        }
+
+        .file-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .file-name {
+            color: var(--text-bright);
+            font-size: 13px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            letter-spacing: 0.5px;
+        }
+        .file-meta {
+            color: #555;
+            font-size: 10px;
+            margin-top: 3px;
+        }
+
+        .dl-btn {
+            display: block;
+            width: 100%;
+            margin-top: 12px;
+            padding: 14px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            color: var(--text-bright);
+            font-family: inherit;
+            font-size: 13px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .dl-btn:hover {
+            background: #111;
+            border-color: #fff;
+            box-shadow: 0 0 25px rgba(255,255,255,0.06);
+        }
+
+        .log-line {
+            font-size: 10px;
+            color: #444;
+            margin-top: 8px;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .log-line .timestamp {
+            color: #333;
+        }
+        .log-line.success {
+            color: #999;
+        }
+        .log-line.error {
+            color: #666;
+        }
+
+        .footer {
+            position: fixed;
+            bottom: 20px;
+            right: 25px;
+            z-index: 10;
+            font-size: 10px;
+            color: #2a2a2a;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            pointer-events: none;
+        }
+
+        .footer span {
+            color: #444;
+        }
+
+        @media (max-width: 500px) {
+            .terminal-body {
+                padding: 20px 15px;
+            }
+            .glitch {
+                font-size: 1.5em;
+                letter-spacing: 3px;
+            }
+            .prompt {
+                padding: 14px 10px;
+                font-size: 12px;
+            }
+            .url-input {
+                font-size: 12px;
+                padding: 14px 10px;
+            }
+            .command-btn {
+                font-size: 11px;
+                letter-spacing: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanlines"></div>
+    <div class="noise"></div>
+    <canvas id="matrixCanvas"></canvas>
+
+    <div class="container">
+        <div class="terminal">
+            <div class="terminal-header">
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-dot"></div>
+                <div class="terminal-title">net_loader_v3.terminal</div>
+            </div>
+
+            <div class="terminal-body">
+                <div class="ascii-logo">
+█▄░█ █▀▀ ▀█▀   █░░ █▀█ ▄▀█ █▀▄ █▀▀ █▀█
+█░▀█ ██▄ ░█░   █▄▄ █▄█ █▀█ █▄▀ ██▄ █▀▄
+                </div>
+
+                <div class="glitch-wrapper">
+                    <div class="glitch" data-text="NET LOADER">NET LOADER</div>
+                </div>
+
+                <div class="subtitle">
+                    [ <span class="blink">▌</span> universal_payload_retriever ]
+                </div>
+
+                <div class="input-line">
+                    <span class="prompt">root@nex:~$</span>
+                    <input
+                        type="text"
+                        class="url-input"
+                        id="urlInput"
+                        placeholder="paste_target_url_here..."
+                        autocomplete="off"
+                        spellcheck="false"
+                    >
+                </div>
+
+                <button class="command-btn" id="fetchBtn">
+                    <span class="cmd-prompt">></span> execute_fetch
+                </button>
+
+                <div class="output-area" id="outputArea">
+                    <div class="output-header">
+                        <span class="status-dot active"></span>
+                        <span>// payload_extracted</span>
+                    </div>
+                    <div class="output-body">
+                        <div class="file-info">
+                            <span class="file-icon">📦</span>
+                            <div class="file-details">
+                                <div class="file-name" id="fileName">target.file</div>
+                                <div class="file-meta" id="fileMeta">size: unknown | type: auto-detected</div>
+                            </div>
+                        </div>
+                        <button class="dl-btn" id="dlBtn">
+                            [ DOWNLOAD_PAYLOAD ]
+                        </button>
+                        <div class="log-line success" id="logLine">
+                            <span class="timestamp">[OK]</span> payload ready for extraction...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">Made By <span>Nex</span></div>
+
+    <script>
+        // ========== ম্যাট্রিক্স রেইন (গ্রেস্কেল) ==========
+        (function matrixRain() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+            const chars = '01アイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲン';
+            const fontSize = 14;
+            const columns = Math.floor(canvas.width / fontSize);
+            const drops = new Array(columns).fill(0);
+            function draw() {
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.font = fontSize + 'px "Courier New", monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+                    const brightness = Math.random();
+                    if (brightness > 0.7) ctx.fillStyle = '#ffffff';
+                    else if (brightness > 0.4) ctx.fillStyle = '#888888';
+                    else ctx.fillStyle = '#333333';
+                    ctx.fillText(text, x, y);
+                    if (y > canvas.height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            setInterval(draw, 40);
+        })();
+
+        // ========== DOM ==========
+        const urlInput = document.getElementById('urlInput');
+        const fetchBtn = document.getElementById('fetchBtn');
+        const outputArea = document.getElementById('outputArea');
+        const fileName = document.getElementById('fileName');
+        const fileMeta = document.getElementById('fileMeta');
+        const dlBtn = document.getElementById('dlBtn');
+        const logLine = document.getElementById('logLine');
+        let currentDownloadUrl = null;
+
+        // ========== প্ল্যাটফর্ম ডিটেক্ট ==========
+        function detectPlatform(url) {
+            const u = url.toLowerCase();
+            if (u.includes('tiktok.com') || u.includes('vm.tiktok') || u.includes('vt.tiktok')) return 'tiktok';
+            if (u.includes('youtube.com') || u.includes('youtu.be')) return 'youtube';
+            if (u.includes('facebook.com') || u.includes('fb.watch') || u.includes('fb.com/video') || u.includes('fb.com/reel')) return 'facebook';
+            return 'unknown';
+        }
+
+        // ========== CORS প্রক্সি লিস্ট ==========
+        const CORS_PROXIES = [
+            'https://corsproxy.io/?',
+            'https://api.allorigins.win/raw?url=',
+            'https://thingproxy.freeboard.io/fetch/',
+        ];
+
+        async function fetchWithProxy(url, proxyIndex = 0) {
+            if (proxyIndex >= CORS_PROXIES.length) {
+                throw new Error('all_proxies_failed');
+            }
+            const proxyUrl = CORS_PROXIES[proxyIndex] + encodeURIComponent(url);
+            try {
+                const res = await fetch(proxyUrl, { 
+                    signal: AbortSignal.timeout(15000)
+                });
+                if (!res.ok) throw new Error('proxy_http_error');
+                return res;
+            } catch (e) {
+                return fetchWithProxy(url, proxyIndex + 1);
+            }
+        }
+
+        // ========== টিকটক API ==========
+        async function fetchTikTok(url) {
+            // tikwm.com API - সবচেয়ে নির্ভরযোগ্য
+            const apiUrl = `https://www.tikwm.com/api/?url=${encodeURIComponent(url)}&hd=1`;
+            
+            try {
+                // প্রথমে সরাসরি ট্রাই
+                let res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
+                if (!res.ok) {
+                    // প্রক্সি দিয়ে ট্রাই
+                    res = await fetchWithProxy(apiUrl);
+                }
+                const data = await res.json();
+                if (data.code === 0 && data.data) {
+                    const dl = data.data.hdplay || data.data.play || data.data.wmplay;
+                    return {
+                        url: dl,
+                        title: data.data.title || 'TikTok Video',
+                        type: 'video/mp4',
+                        platform: 'TikTok',
+                        thumbnail: data.data.cover || '',
+                    };
+                }
+                throw new Error('tikwm_failed');
+            } catch (e) {
+                // ফলব্যাক: tikcdn.io API
+                try {
+                    const res2 = await fetch(`https://tikcdn.io/api?url=${encodeURIComponent(url)}`, {
+                        signal: AbortSignal.timeout(10000)
+                    });
+                    const d2 = await res2.json();
+                    if (d2.videoUrl) {
+                        return {
+                            url: d2.videoUrl,
+                            title: d2.title || 'TikTok Video',
+                            type: 'video/mp4',
+                            platform: 'TikTok',
+                            thumbnail: d2.thumbnail || '',
+                        };
+                    }
+                } catch (e2) {}
+                throw new Error('tiktok_all_apis_failed');
+            }
+        }
+
+        // ========== ইউটিউব API ==========
+        async function fetchYouTube(url) {
+            // cobalt API ইউটিউবের জন্য ভালো কাজ করে
+            const apis = [
+                {
+                    name: 'cobalt',
+                    fetch: async () => {
+                        const res = await fetch('https://api.cobalt.tools/api/json', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                url: url,
+                                vQuality: '720',
+                                aFormat: 'mp3',
+                                isAudioOnly: false,
+                                isNoTTWatermark: true,
+                            }),
+                            signal: AbortSignal.timeout(15000),
+                        });
+                        if (!res.ok) throw new Error('cobalt_http_error');
+                        const data = await res.json();
+                        if (data.status === 'error' || data.error) throw new Error(data.error || 'cobalt_error');
+                        let dl = data.url;
+                        if (data.picker && data.picker.length > 0) {
+                            dl = data.picker[data.picker.length - 1].url || data.url;
+                        }
+                        return {
+                            url: dl,
+                            title: data.title || 'YouTube Video',
+                            type: 'video/mp4',
+                            platform: 'YouTube',
+                            thumbnail: data.thumb || '',
+                        };
+                    }
+                },
+                {
+                    name: 'loader_to',
+                    fetch: async () => {
+                        const res = await fetch(`https://loader.to/api/card/?url=${encodeURIComponent(url)}&format=mp4`, {
+                            signal: AbortSignal.timeout(15000),
+                        });
+                        const d = await res.json();
+                        if (d.success && d.url) {
+                            return {
+                                url: d.url,
+                                title: d.title || 'YouTube Video',
+                                type: 'video/mp4',
+                                platform: 'YouTube',
+                                thumbnail: d.thumbnail || '',
+                            };
+                        }
+                        throw new Error('loader_to_failed');
+                    }
+                },
+            ];
+
+            for (const api of apis) {
+                try {
+                    return await api.fetch();
+                } catch (e) {
+                    console.warn(`[${api.name}] failed:`, e.message);
+                }
+            }
+
+            // আল্টিমেট ফলব্যাক: savefrom.net এর মাধ্যমে ওপেন
+            throw new Error('youtube_all_apis_failed|https://en.savefrom.net/1-youtube-video-downloader-1/?url=' + encodeURIComponent(url));
+        }
+
+        // ========== ফেসবুক API ==========
+        async function fetchFacebook(url) {
+            const apis = [
+                {
+                    name: 'fbdown_net',
+                    fetch: async () => {
+                        // fbdown.net পাবলিক API প্যাটার্ন
+                        const apiUrl = `https://fbdown.net/api/download?url=${encodeURIComponent(url)}`;
+                        let res;
+                        try {
+                            res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
+                        } catch {
+                            res = await fetchWithProxy(apiUrl);
+                        }
+                        const data = await res.json();
+                        if (data.success && (data.hd || data.sd || data.url)) {
+                            const dl = data.hd || data.sd || data.url;
+                            return {
+                                url: dl,
+                                title: data.title || 'Facebook Video',
+                                type: 'video/mp4',
+                                platform: 'Facebook',
+                                thumbnail: data.thumbnail || '',
+                            };
+                        }
+                        throw new Error('fbdown_failed');
+                    }
+                },
+                {
+                    name: 'fbdownloader_app',
+                    fetch: async () => {
+                        const apiUrl = `https://fbdownloader.app/api?url=${encodeURIComponent(url)}`;
+                        let res;
+                        try {
+                            res = await fetch(apiUrl, { signal: AbortSignal.timeout(12000) });
+                        } catch {
+                            res = await fetchWithProxy(apiUrl);
+                        }
+                        const d = await res.json();
+                        if (d.downloadUrl || d.url) {
+                            return {
+                                url: d.downloadUrl || d.url,
+                                title: d.title || 'Facebook Video',
+                                type: 'video/mp4',
+                                platform: 'Facebook',
+                                thumbnail: d.thumbnail || '',
+                            };
+                        }
+                        throw new Error('fbdownloader_failed');
+                    }
+                },
+                {
+                    name: 'cobalt_fb',
+                    fetch: async () => {
+                        const res = await fetch('https://api.cobalt.tools/api/json', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify({
+                                url: url,
+                                vQuality: '720',
+                                aFormat: 'best',
+                                isAudioOnly: false,
+                                isNoTTWatermark: true,
+                            }),
+                            signal: AbortSignal.timeout(15000),
+                        });
+                        if (!res.ok) throw new Error('cobalt_fb_http_error');
+                        const data = await res.json();
+                        if (data.status === 'error' || data.error) throw new Error(data.error || 'cobalt_fb_error');
+                        let dl = data.url;
+                        if (data.picker && data.picker.length > 0) {
+                            dl = data.picker[data.picker.length - 1].url || data.url;
+                        }
+                        return {
+                            url: dl,
+                            title: data.title || 'Facebook Video',
+                            type: 'video/mp4',
+                            platform: 'Facebook',
+                            thumbnail: data.thumb || '',
+                        };
+                    }
+                },
+            ];
+
+            for (const api of apis) {
+                try {
+                    return await api.fetch();
+                } catch (e) {
+                    console.warn(`[${api.name}] failed:`, e.message);
+                }
+            }
+
+            throw new Error('facebook_all_apis_failed|https://www.fbdown.net/download.php?url=' + encodeURIComponent(url));
+        }
+
+        // ========== মেইন ফেচ হ্যান্ডলার ==========
+        async function handleFetch() {
+            const url = urlInput.value.trim();
+
+            if (!url) {
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> no target url provided...';
+                logLine.className = 'log-line error';
+                outputArea.classList.add('show');
+                return;
+            }
+
+            try {
+                new URL(url);
+            } catch (e) {
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> invalid url format...';
+                logLine.className = 'log-line error';
+                outputArea.classList.add('show');
+                return;
+            }
+
+            const platform = detectPlatform(url);
+
+            if (platform === 'unknown') {
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> unsupported platform | only: YT/TT/FB...';
+                logLine.className = 'log-line error';
+                outputArea.classList.add('show');
+                return;
+            }
+
+            fetchBtn.disabled = true;
+            fetchBtn.innerHTML = '<span class="spinner"></span> extracting_from_' + platform + '...';
+            outputArea.classList.remove('show');
+            currentDownloadUrl = null;
+
+            try {
+                let result;
+
+                if (platform === 'tiktok') {
+                    result = await fetchTikTok(url);
+                } else if (platform === 'youtube') {
+                    result = await fetchYouTube(url);
+                } else if (platform === 'facebook') {
+                    result = await fetchFacebook(url);
+                }
+
+                if (!result || !result.url) {
+                    throw new Error('no_download_url_extracted');
+                }
+
+                currentDownloadUrl = result.url;
+
+                const cleanTitle = (result.title || 'payload').replace(/[^a-zA-Z0-9\u0980-\u09FF\s\-_]/g, '').substring(0, 40);
+                const ext = result.type === 'audio/mpeg' ? '.mp3' : '.mp4';
+                fileName.textContent = cleanTitle + ext;
+                fileMeta.textContent = `platform: ${result.platform} | type: ${result.type}`;
+
+                logLine.innerHTML = `<span class="timestamp">[OK]</span> ${result.platform} payload extracted | ready`;
+                logLine.className = 'log-line success';
+                outputArea.classList.add('show');
+
+            } catch (err) {
+                console.error('Fetch error:', err);
+                const errMsg = err.message || 'extraction_failed';
+
+                // যদি ফলব্যাক URL থাকে (| দিয়ে সেপারেটেড)
+                if (errMsg.includes('|')) {
+                    const parts = errMsg.split('|');
+                    const fallbackUrl = parts[1];
+                    logLine.innerHTML = `<span class="timestamp">[WARN]</span> direct extraction failed. <a href="${fallbackUrl}" target="_blank" style="color:#888;text-decoration:underline;">open_external_service</a>`;
+                    logLine.className = 'log-line error';
+                    currentDownloadUrl = fallbackUrl;
+                    fileName.textContent = 'external_download_link';
+                    fileMeta.textContent = 'click download to open external service';
+                    dlBtn.textContent = '[ OPEN_EXTERNAL ]';
+                } else {
+                    logLine.innerHTML = '<span class="timestamp">[ERR]</span> ' + errMsg.substring(0, 60);
+                    logLine.className = 'log-line error';
+                }
+                outputArea.classList.add('show');
+            } finally {
+                fetchBtn.disabled = false;
+                fetchBtn.innerHTML = '<span class="cmd-prompt">></span> execute_fetch';
+                dlBtn.textContent = currentDownloadUrl && currentDownloadUrl.startsWith('http') ? 
+                    '[ DOWNLOAD_PAYLOAD ]' : '[ OPEN_EXTERNAL ]';
+            }
+        }
+
+        // ========== ইভেন্ট লিসেনার ==========
+        fetchBtn.addEventListener('click', handleFetch);
+
+        dlBtn.addEventListener('click', () => {
+            if (!currentDownloadUrl) {
+                logLine.innerHTML = '<span class="timestamp">[ERR]</span> no payload in memory...';
+                logLine.className = 'log-line error';
+                return;
+            }
+
+            const a = document.createElement('a');
+            a.href = currentDownloadUrl;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            try {
+                const urlObj = new URL(currentDownloadUrl);
+                const fname = urlObj.pathname.split('/').pop() || 'payload.mp4';
+                a.download = fname;
+            } catch (e) {
+                a.download = 'netloader_payload.mp4';
+            }
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            logLine.innerHTML = '<span class="timestamp">[>>]</span> download initiated...';
+            logLine.className = 'log-line success';
+        });
+
+        urlInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleFetch();
+        });
+
+        urlInput.focus();
+
+        console.log('%c[ NET LOADER v3 ]%c // multi-api engine // FB | TT | YT // Made By Nex',
+            'color:#fff;font-weight:bold;', 'color:#888;');
+        console.log('%c[ READY ]%c paste facebook/tiktok/youtube url...',
+            'color:#fff;', 'color:#666;');
+    </script>
+</body>
+</html>
