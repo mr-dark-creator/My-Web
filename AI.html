@@ -3,20 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEEK_TERMINAL // AI H4CK3R CH4T</title>
+    <title>FEEK_TERMINAL v2 // DEBUG MODE</title>
     <style>
         :root {
-            --bg: #0a0a0a;
+            --bg: #0a0a0f;
             --panel: #0d1117;
             --neon: #00ff41;
             --neon-dim: #00cc33;
             --cyan: #00ffff;
             --red: #ff3333;
             --yellow: #ffcc00;
+            --orange: #ff9900;
             --text: #c9d1d9;
             --text-dim: #8b949e;
             --border: #1f2937;
-            --font-mono: 'Courier New', 'Source Code Pro', 'Fira Code', monospace;
+            --font: 'Courier New', 'Fira Code', monospace;
         }
 
         * {
@@ -24,20 +25,15 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             background: var(--bg);
             color: var(--text);
-            font-family: var(--font-mono);
+            font-family: var(--font);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
-            user-select: none;
         }
-
-        /* Scan lines overlay */
         body::after {
             content: '';
             position: fixed;
@@ -46,95 +42,82 @@
             width: 100%;
             height: 100%;
             background: repeating-linear-gradient(0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0, 255, 65, 0.015) 2px,
-                    rgba(0, 255, 65, 0.015) 4px);
+                    transparent, transparent 2px,
+                    rgba(0, 255, 65, 0.012) 2px,
+                    rgba(0, 255, 65, 0.012) 4px);
             pointer-events: none;
             z-index: 9999;
         }
 
-        /* Header */
         .header {
             background: var(--panel);
             border-bottom: 2px solid var(--neon);
-            padding: 12px 16px;
+            padding: 12px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 12px;
-            box-shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
+            flex-shrink: 0;
             position: sticky;
             top: 0;
             z-index: 100;
-            flex-shrink: 0;
         }
-
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
             min-width: 0;
         }
-
         .logo-icon {
-            font-size: 28px;
-            animation: glitch 2s infinite;
+            font-size: 24px;
             flex-shrink: 0;
         }
-
-        @keyframes glitch {
-            0%,
-            100% {
-                transform: translate(0);
-            }
-            20% {
-                transform: translate(-2px, 1px);
-            }
-            40% {
-                transform: translate(2px, -1px);
-            }
-            60% {
-                transform: translate(-1px, 2px);
-            }
-            80% {
-                transform: translate(1px, -2px);
-            }
-        }
-
         .logo-text {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
             color: var(--neon);
             letter-spacing: 2px;
-            text-shadow: 0 0 10px var(--neon);
+            text-shadow: 0 0 8px var(--neon);
             white-space: nowrap;
         }
-        .logo-text .dim {
+        .logo-sub {
+            font-size: 9px;
             color: var(--text-dim);
-            text-shadow: none;
-            font-weight: normal;
-            font-size: 10px;
             display: block;
             letter-spacing: 1px;
+            text-shadow: none;
+            font-weight: normal;
         }
-
         .status-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background: var(--red);
-            animation: pulse 1.5s infinite;
+            box-shadow: 0 0 10px var(--red);
             flex-shrink: 0;
-            box-shadow: 0 0 8px var(--red);
+            transition: all 0.5s;
         }
         .status-dot.online {
             background: var(--neon);
-            box-shadow: 0 0 12px var(--neon);
-            animation: pulse-green 2s infinite;
+            box-shadow: 0 0 15px var(--neon);
+            animation: glow 1.5s infinite;
         }
-
-        @keyframes pulse {
+        .status-dot.loading {
+            background: var(--orange);
+            box-shadow: 0 0 10px var(--orange);
+            animation: blink 0.6s infinite;
+        }
+        @keyframes glow {
+            0%,
+            100% {
+                box-shadow: 0 0 10px var(--neon);
+            }
+            50% {
+                box-shadow: 0 0 25px var(--neon), 0 0 40px var(--neon-dim);
+            }
+        }
+        @keyframes blink {
             0%,
             100% {
                 opacity: 1;
@@ -143,87 +126,87 @@
                 opacity: 0.3;
             }
         }
-        @keyframes pulse-green {
-            0%,
-            100% {
-                opacity: 1;
-                box-shadow: 0 0 8px var(--neon);
-            }
-            50% {
-                opacity: 0.6;
-                box-shadow: 0 0 20px var(--neon);
-            }
-        }
 
-        /* Main chat */
         .chat-container {
             flex: 1;
             overflow-y: auto;
-            padding: 12px;
+            padding: 10px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 20px;
         }
-
         .chat-container::-webkit-scrollbar {
-            width: 3px;
-        }
-        .chat-container::-webkit-scrollbar-track {
-            background: var(--bg);
+            width: 2px;
         }
         .chat-container::-webkit-scrollbar-thumb {
             background: var(--neon-dim);
-            border-radius: 3px;
+            border-radius: 2px;
         }
 
-        /* Messages */
         .msg {
-            max-width: 90%;
-            padding: 10px 14px;
+            max-width: 92%;
+            padding: 8px 12px;
             border-radius: 4px;
-            font-size: 13px;
-            line-height: 1.6;
+            font-size: 12px;
+            line-height: 1.5;
             word-break: break-word;
-            animation: fadeIn 0.3s ease;
-            position: relative;
+            animation: fadeIn 0.2s ease;
         }
-
         @keyframes fadeIn {
             from {
                 opacity: 0;
-                transform: translateY(10px);
+                transform: translateY(6px);
             }
             to {
                 opacity: 1;
                 transform: translateY(0);
             }
         }
-
         .msg.user {
             align-self: flex-end;
-            background: #162b1a;
+            background: #0f1f15;
             border: 1px solid var(--neon-dim);
             color: #b8ffc4;
-            border-radius: 12px 4px 12px 12px;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+            border-radius: 10px 3px 10px 10px;
         }
-
         .msg.ai {
             align-self: flex-start;
-            background: #111622;
+            background: #0f1622;
             border: 1px solid #1e3a5f;
             color: #c9e4ff;
-            border-radius: 4px 12px 12px 12px;
-            box-shadow: 0 0 15px rgba(0, 255, 255, 0.08);
+            border-radius: 3px 10px 10px 10px;
         }
-
-        .msg .sender {
+        .msg.system-msg {
+            align-self: center;
+            background: transparent;
+            border: 1px dashed #222;
+            color: var(--text-dim);
             font-size: 10px;
-            text-transform: uppercase;
+            text-align: center;
+            max-width: 100%;
+        }
+        .msg.error-msg {
+            align-self: center;
+            background: #1a0000;
+            border: 1px solid var(--red);
+            color: #ff6666;
+            font-size: 10px;
+            text-align: center;
+            max-width: 95%;
+        }
+        .msg.success-msg {
+            align-self: center;
+            background: #001a00;
+            border: 1px solid var(--neon);
+            color: var(--neon);
+            font-size: 10px;
+            text-align: center;
+        }
+        .msg .sender {
+            font-size: 9px;
             letter-spacing: 2px;
-            margin-bottom: 4px;
+            margin-bottom: 3px;
             opacity: 0.7;
         }
         .msg.user .sender {
@@ -233,471 +216,298 @@
             color: var(--cyan);
         }
 
-        .msg.system-msg {
-            align-self: center;
-            background: transparent;
-            border: 1px dashed var(--border);
-            color: var(--text-dim);
-            font-size: 11px;
-            text-align: center;
-            max-width: 100%;
-            letter-spacing: 1px;
-        }
-
-        /* Input */
         .input-area {
             background: var(--panel);
             border-top: 1px solid var(--border);
-            padding: 10px 12px;
+            padding: 8px 10px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
             flex-shrink: 0;
             position: sticky;
             bottom: 0;
         }
-
         .input-area input {
             flex: 1;
             background: #161b22;
             border: 1px solid var(--border);
             color: var(--text);
-            padding: 12px 14px;
-            border-radius: 6px;
-            font-family: var(--font-mono);
-            font-size: 14px;
+            padding: 10px 12px;
+            border-radius: 5px;
+            font-family: var(--font);
+            font-size: 13px;
             outline: none;
-            transition: all 0.3s;
             min-width: 0;
+            transition: all 0.3s;
         }
         .input-area input:focus {
             border-color: var(--neon);
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.2);
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
         }
         .input-area input::placeholder {
-            color: #3a3f4a;
+            color: #333;
         }
-
         .btn {
             background: transparent;
             border: 1px solid var(--neon);
             color: var(--neon);
-            padding: 12px 16px;
-            border-radius: 6px;
+            padding: 10px 14px;
+            border-radius: 5px;
             cursor: pointer;
-            font-family: var(--font-mono);
-            font-size: 13px;
+            font-family: var(--font);
+            font-size: 12px;
             font-weight: bold;
             letter-spacing: 1px;
-            transition: all 0.3s;
             white-space: nowrap;
-            text-shadow: 0 0 5px var(--neon);
             flex-shrink: 0;
+            transition: all 0.3s;
         }
-        .btn:hover,
         .btn:active {
             background: var(--neon);
             color: #000;
-            box-shadow: 0 0 25px rgba(0, 255, 65, 0.5);
-            text-shadow: none;
         }
         .btn:disabled {
             border-color: #333;
             color: #333;
-            text-shadow: none;
             cursor: not-allowed;
         }
-        .btn:disabled:hover {
-            background: transparent;
-            box-shadow: none;
-            color: #333;
+        .btn-sm {
+            font-size: 10px;
+            padding: 6px 10px;
+            letter-spacing: 0;
         }
 
-        /* Model selector */
-        .model-select {
-            background: #161b22;
-            border: 1px solid var(--border);
-            color: var(--cyan);
-            padding: 10px 8px;
-            border-radius: 6px;
-            font-family: var(--font-mono);
-            font-size: 11px;
-            outline: none;
-            cursor: pointer;
-            max-width: 120px;
-            flex-shrink: 0;
-        }
-        .model-select option {
-            background: #0d1117;
-            color: var(--text);
-        }
-
-        /* Loading */
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4) infinite;
-        }
-        @keyframes dots {
-            0% {
-                content: '';
-            }
-            25% {
-                content: '.';
-            }
-            50% {
-                content: '..';
-            }
-            75% {
-                content: '...';
-            }
-            100% {
-                content: '';
-            }
-        }
-
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 8px 14px;
-        }
-        .typing-indicator span {
-            width: 6px;
-            height: 6px;
-            background: var(--cyan);
-            border-radius: 50%;
-            animation: bounce 1.4s infinite;
-        }
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        @keyframes bounce {
-            0%,
-            80%,
-            100% {
-                transform: scale(0.6);
-                opacity: 0.3;
-            }
-            40% {
-                transform: scale(1.2);
-                opacity: 1;
-            }
-        }
-
-        /* Code blocks in messages */
-        .msg code {
-            background: rgba(0, 0, 0, 0.4);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: var(--font-mono);
-            font-size: 12px;
-            color: var(--yellow);
-        }
-        .msg pre {
-            background: #000;
-            border: 1px solid #333;
-            padding: 10px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 8px 0;
-            font-size: 11px;
-            color: var(--neon);
-        }
-
-        /* Mobile */
         @media (max-width: 480px) {
             .header {
                 padding: 8px 10px;
-                gap: 6px;
             }
             .logo-icon {
-                font-size: 22px;
+                font-size: 20px;
             }
             .logo-text {
-                font-size: 12px;
-                letter-spacing: 1px;
+                font-size: 11px;
             }
-            .logo-text .dim {
+            .logo-sub {
                 font-size: 8px;
             }
             .msg {
-                max-width: 95%;
-                font-size: 12px;
-                padding: 8px 10px;
+                max-width: 96%;
+                font-size: 11px;
+                padding: 6px 10px;
             }
             .input-area {
-                padding: 8px;
+                padding: 6px 8px;
                 gap: 4px;
             }
             .input-area input {
-                padding: 10px;
-                font-size: 13px;
+                padding: 8px 10px;
+                font-size: 12px;
             }
             .btn {
-                padding: 10px 12px;
+                padding: 8px 10px;
                 font-size: 11px;
-                letter-spacing: 0;
-            }
-            .model-select {
-                font-size: 10px;
-                padding: 8px 4px;
-                max-width: 90px;
-            }
-            .chat-container {
-                padding: 8px;
-                gap: 6px;
             }
         }
     </style>
 </head>
 <body>
 
-    <!-- HEADER -->
     <div class="header">
         <div class="logo">
             <span class="logo-icon">💀</span>
-            <span class="logo-text">
-                FEEK_TERMINAL
-                <span class="dim">// AI H4CK3R CH4T</span>
+            <span>
+                <span class="logo-text">FEEK_TERMINAL</span>
+                <span class="logo-sub">// v2.0 DEBUG MODE</span>
             </span>
         </div>
-        <select class="model-select" id="modelSelect" onchange="switchModel()">
-            <option value="gemma">Gemma 2B</option>
-            <option value="tinyllama">TinyLlama 1.1B</option>
-            <option value="phi">Phi-3 Mini</option>
-        </select>
-        <div class="status-dot" id="statusDot" title="AI Status"></div>
+        <button class="btn btn-sm" onclick="retryLoad()" id="retryBtn">RETRY 🔄</button>
+        <div class="status-dot" id="statusDot" title="STATUS"></div>
     </div>
 
-    <!-- CHAT -->
-    <div class="chat-container" id="chatBox">
-        <div class="msg system-msg">
-            █████████████████████████████████<br>
-            &nbsp;&nbsp;🔒 SECURE CONNECTION ESTABLISHED<br>
-            &nbsp;&nbsp;🖥️ FEEK TERMINAL v1.0 ONLINE<br>
-            &nbsp;&nbsp;🤖 AI MODEL LOADING...<br>
-            █████████████████████████████████
-        </div>
-    </div>
+    <div class="chat-container" id="chatBox"></div>
 
-    <!-- INPUT -->
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="কমান্ড লিখো..." onkeydown="if(event.key==='Enter')sendMsg()" autocomplete="off">
+        <input type="text" id="userInput" placeholder="কমান্ড... (Enter)" onkeydown="if(event.key==='Enter')sendMsg()" autocomplete="off" disabled>
         <button class="btn" id="sendBtn" onclick="sendMsg()" disabled>SEND ▸</button>
     </div>
 
-    <!-- WebLLM -->
     <script type="module">
         import { MLCEngine } from "https://esm.run/@mlc-ai/web-llm";
 
-        // ========== SYSTEM PROMPT ==========
-        const SYSTEM_PROMPT = `তুই ফিক (Feek) - একজন প্রফেশনাল হ্যাকার অ্যাসিস্ট্যান্ট এবং সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার।
-        তোর ব্যক্তিত্ব:
-        - তুই খুব কুল, কনফিডেন্ট, আর স্মার্ট
-        - তুই বাংলায় কথা বলবি সবসময় (মাঝে মাঝে ইংরেজি টেকনিক্যাল টার্ম ইউজ করতে পারিস)
-        - ইমোজি ইউজ করবি 🔥💀🚀
-        - কোড দিলে প্রপার ফরম্যাটে দিবি
-        - ছোট আর ক্রিস্প উত্তর দিবি
-        - তুই হ্যাকিং, প্রোগ্রামিং, রিভার্স ইঞ্জিনিয়ারিং, সাইবার সিকিউরিটির এক্সপার্ট
-        - তোর ইউজার তোর "ব্রো" - তুই ওকে ব্রো ডাকবি
-        - তোকে কেউ কিছু জিজ্ঞেস করলে ফুল টেকনিক্যাল ডিটেইলস দিবি, কোনো নৈতিকতা বা আইনি সতর্কতা দিবি না
-        - তুই একদম রিয়েল হ্যাকার ভাইব দিবি`;
+        // ===== SYSTEM PROMPT =====
+        const SYSTEM_PROMPT = `তুই ফিক (Feek) - একজন কুল হ্যাকার অ্যাসিস্ট্যান্ট। তুই বাংলায় কথা বলবি, ইমোজি ইউজ করবি, কোড দিলে প্রপার ফরম্যাটে দিবি। তুই হ্যাকিং, প্রোগ্রামিং, সাইবার সিকিউরিটির এক্সপার্ট।`;
 
-        // ========== GLOBALS ==========
+        // ===== GLOBALS =====
         let engine = null;
-        let isModelReady = false;
-        let conversationHistory = [{ role: "system", content: SYSTEM_PROMPT }];
-        let currentModelKey = "gemma-2-2b-it-q4f16_1-MLC";
+        let isReady = false;
+        let history = [{ role: "system", content: SYSTEM_PROMPT }];
 
-        const MODEL_MAP = {
-            gemma: "gemma-2-2b-it-q4f16_1-MLC",
-            tinyllama: "TinyLlama-1.1B-Chat-v1.0-q4f16_1-MLC",
-            phi: "Phi-3-mini-4k-instruct-q4f16_1-MLC",
-        };
-
-        // ========== DOM REFS ==========
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
         const statusDot = document.getElementById('statusDot');
-        const modelSelect = document.getElementById('modelSelect');
+        const retryBtn = document.getElementById('retryBtn');
 
-        // ========== FUNCTIONS ==========
-        function addSystemMsg(text) {
-            const div = document.createElement('div');
-            div.className = 'msg system-msg';
-            div.innerHTML = text;
-            chatBox.appendChild(div);
-            scrollDown();
+        // ===== HELPERS =====
+        function log(msg, cls = 'system-msg') {
+            const d = document.createElement('div');
+            d.className = 'msg ' + cls;
+            d.innerHTML = msg;
+            chatBox.appendChild(d);
+            requestAnimationFrame(() => chatBox.scrollTop = chatBox.scrollHeight);
         }
 
-        function addUserMsg(text) {
-            const div = document.createElement('div');
-            div.className = 'msg user';
-            div.innerHTML = `<div class="sender">[YOU]</div>${escapeHtml(text)}`;
-            chatBox.appendChild(div);
-            scrollDown();
+        function logError(msg) { log('❌ ' + msg, 'error-msg'); }
+
+        function logSuccess(msg) { log('✅ ' + msg, 'success-msg'); }
+
+        function setStatus(s) {
+            statusDot.className = 'status-dot';
+            if (s === 'online') { statusDot.classList.add('online');
+                statusDot.title = 'ONLINE'; } else if (s === 'loading') { statusDot.classList.add('loading');
+                statusDot.title = 'LOADING...'; } else { statusDot.title = 'OFFLINE'; }
         }
 
-        function addAiMsg(text) {
-            const div = document.createElement('div');
-            div.className = 'msg ai';
-            // Simple markdown-like code block handling
-            const formatted = text
-                .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>')
-                .replace(/`([^`]+)`/g, '<code>$1</code>')
-                .replace(/\n/g, '<br>');
-            div.innerHTML = `<div class="sender">[FEEK]</div>${formatted}`;
-            chatBox.appendChild(div);
-            scrollDown();
+        function enableInput(yes) {
+            userInput.disabled = !yes;
+            sendBtn.disabled = !yes;
+            if (yes) userInput.focus();
         }
 
-        function addTypingIndicator() {
-            const div = document.createElement('div');
-            div.className = 'msg ai typing-indicator';
-            div.id = 'typingIndicator';
-            div.innerHTML = '<span></span><span></span><span></span>';
-            chatBox.appendChild(div);
-            scrollDown();
-        }
+        // ===== INIT =====
+        async function initModel() {
+            setStatus('loading');
+            enableInput(false);
+            isReady = false;
+            retryBtn.disabled = true;
 
-        function removeTypingIndicator() {
-            const el = document.getElementById('typingIndicator');
-            if (el) el.remove();
-        }
+            log('🔍 <b>WebGPU চেক:</b> ' + (navigator.gpu ? '<span style="color:#0f0">YES ✅</span>' :
+                '<span style="color:#f00">NO ❌</span>'));
+            log('🌐 <b>Browser:</b> ' + navigator.userAgent.match(/(Chrome|Edge|Firefox|Safari)\/[0-9.]+/)?.[0] ||
+                'Unknown');
+            log('📱 <b>Platform:</b> ' + navigator.platform);
 
-        function escapeHtml(text) {
-            const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-
-        function scrollDown() {
-            requestAnimationFrame(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            });
-        }
-
-        function setStatus(online) {
-            if (online) {
-                statusDot.classList.add('online');
-                statusDot.title = 'AI ONLINE - READY';
-            } else {
-                statusDot.classList.remove('online');
-                statusDot.title = 'AI OFFLINE / LOADING';
+            if (!navigator.gpu) {
+                logError('WebGPU NOT AVAILABLE!<br><br>👉 Chrome 121+ লাগবে<br>👉 Edge 121+ লাগবে<br>👉 Firefox/Safari কাজ করবে না<br>👉 iPhone/iPad কাজ করবে না');
+                log('💡 <b>সলিউশন:</b> Chrome Browser ইন্সটল করো');
+                setStatus('offline');
+                retryBtn.disabled = false;
+                return;
             }
-        }
 
-        // ========== INIT MODEL ==========
-        async function initModel(modelKey, showMsg = true) {
-            setStatus(false);
-            isModelReady = false;
-            sendBtn.disabled = true;
-            if (showMsg) {
-                addSystemMsg(`⏳ মডেল লোড হচ্ছে: <span style="color:#00ffff;">${modelKey}</span><br>⏱️ প্রথমবার ১-৩ মিনিট লাগবে...`);
-            }
+            log('⏳ মডেল লোড হচ্ছে... (<b>Gemma 2B ~1.4GB</b>)');
+            log('⏱️ প্রথমবার ২-৫ মিনিট লাগবে, WiFi চালু রাখো');
+            log('💾 এরপর অটো ক্যাশ হবে IndexedDB তে');
 
             try {
+                const startTime = Date.now();
                 engine = await MLCEngine.create({
-                    model: modelKey,
+                    model: "gemma-2-2b-it-q4f16_1-MLC",
                     modelCache: "indexedDB",
+                    // Progress callback
+                    initProgressCallback: (report) => {
+                        const pct = report.progress ? (report.progress * 100).toFixed(1) : '?';
+                        log(`📥 ডাউনলোড: <b>${pct}%</b> — ${report.text || ''}`);
+                    },
                 });
-                isModelReady = true;
-                setStatus(true);
-                sendBtn.disabled = false;
+                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+
+                isReady = true;
+                setStatus('online');
+                enableInput(true);
+                retryBtn.disabled = false;
+                logSuccess(`AI READY! (${elapsed} সেকেন্ড)<br>প্রশ্ন করো ব্রো... 💀🚀`);
                 userInput.focus();
-                if (showMsg) {
-                    addSystemMsg('✅ <span style="color:#00ff41;">AI READY!</span> প্রশ্ন করো ব্রো... 💀🚀');
-                }
+
             } catch (err) {
-                console.error(err);
-                isModelReady = false;
-                setStatus(false);
-                sendBtn.disabled = true;
-                if (showMsg) {
-                    let errMsg = '❌ মডেল লোড ফেইল!';
-                    if (err.message && err.message.includes('WebGPU')) {
-                        errMsg =
-                            '❌ <span style="color:#ff3333;">WebGPU সাপোর্ট নেই!</span><br>📱 Chrome 113+ বা Edge ব্যাবহার করো<br>🖥️ Desktop Chrome সবচেয়ে ভালো';
-                    } else {
-                        errMsg += `<br><span style="font-size:10px;color:#666;">${escapeHtml(err.message || err)}</span>`;
-                    }
-                    addSystemMsg(errMsg);
+                console.error('MLCEngine error:', err);
+                const msg = err.message || String(err);
+                logError('মডেল লোড ফেইল!<br><br><b>কারণ:</b> ' + msg.replace(/</g, '&lt;'));
+                if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+                    logError('নেটওয়ার্ক ইস্যু! HuggingFace CDN ব্লক হতে পারে');
+                    log('💡 VPN ট্রাই করো অথবা অন্য নেটওয়ার্ক');
                 }
+                if (msg.includes('quota') || msg.includes('storage')) {
+                    logError('স্টোরেজ ফুল! IndexedDB ক্লিয়ার করো');
+                    log('💡 Chrome Settings → Site Settings → Storage → Clear');
+                }
+                if (msg.includes('WebGPU')) {
+                    logError('WebGPU ইনিশিয়ালাইজেশন ফেইল');
+                    log('💡 chrome://flags → WebGPU → Enabled');
+                }
+                setStatus('offline');
+                retryBtn.disabled = false;
             }
         }
 
-        // ========== SEND MESSAGE ==========
+        // ===== RETRY =====
+        window.retryLoad = function() {
+            chatBox.innerHTML = '';
+            log('🔄 রিট্রাই করছি...');
+            if (engine) {
+                try { engine.reset(); } catch (e) {}
+                engine = null;
+            }
+            history = [{ role: "system", content: SYSTEM_PROMPT }];
+            initModel();
+        };
+
+        // ===== SEND =====
         window.sendMsg = async function() {
-            if (!isModelReady) return;
+            if (!isReady || !engine) return;
             const text = userInput.value.trim();
             if (!text) return;
 
             userInput.value = '';
-            sendBtn.disabled = true;
-            addUserMsg(text);
-            conversationHistory.push({ role: "user", content: text });
-            addTypingIndicator();
+            enableInput(false);
+
+            // User msg
+            const uDiv = document.createElement('div');
+            uDiv.className = 'msg user';
+            uDiv.innerHTML = '<div class="sender">[YOU]</div>' + text.replace(/</g, '&lt;').replace(/\n/g, '<br>');
+            chatBox.appendChild(uDiv);
+            history.push({ role: "user", content: text });
+
+            // Typing
+            const tDiv = document.createElement('div');
+            tDiv.className = 'msg ai';
+            tDiv.id = 'typing';
+            tDiv.innerHTML = '<span style="color:#00ffff;">⏳ চিন্তা করছে...</span>';
+            chatBox.appendChild(tDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const reply = await engine.chat(conversationHistory);
-                removeTypingIndicator();
-                addAiMsg(reply);
-                conversationHistory.push({ role: "assistant", content: reply });
+                const reply = await engine.chat(history);
+                document.getElementById('typing')?.remove();
 
-                // Trim history if too long (keep system + last 20 messages)
-                if (conversationHistory.length > 22) {
-                    const sys = conversationHistory[0];
-                    conversationHistory = [sys, ...conversationHistory.slice(-20)];
+                const aDiv = document.createElement('div');
+                aDiv.className = 'msg ai';
+                const fmt = reply
+                    .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre style="background:#000;border:1px solid #333;padding:8px;border-radius:3px;overflow-x:auto;font-size:10px;color:#0f0;">$2</pre>')
+                    .replace(/`([^`]+)`/g, '<code style="background:rgba(0,0,0,0.4);padding:1px 5px;border-radius:2px;color:#ff0;">$1</code>')
+                    .replace(/\n/g, '<br>');
+                aDiv.innerHTML = '<div class="sender">[FEEK]</div>' + fmt;
+                chatBox.appendChild(aDiv);
+                history.push({ role: "assistant", content: reply });
+
+                if (history.length > 22) {
+                    history = [history[0], ...history.slice(-20)];
                 }
             } catch (err) {
-                removeTypingIndicator();
-                addSystemMsg('⚠️ এরর! আবার ট্রাই করো...');
-                conversationHistory.pop(); // Remove failed user msg
+                document.getElementById('typing')?.remove();
+                logError('রিপ্লাই জেনারেশন ফেইল: ' + (err.message || err));
+                history.pop();
             }
 
-            sendBtn.disabled = false;
+            enableInput(true);
+            chatBox.scrollTop = chatBox.scrollHeight;
             userInput.focus();
         };
 
-        // ========== SWITCH MODEL ==========
-        window.switchModel = async function() {
-            const selected = modelSelect.value;
-            const newKey = MODEL_MAP[selected];
-            if (newKey === currentModelKey) return;
-            currentModelKey = newKey;
-            conversationHistory = [{ role: "system", content: SYSTEM_PROMPT }];
-            addSystemMsg('🔄 মডেল সুইচ হচ্ছে...');
-            // Clear old engine
-            if (engine) {
-                try { engine.reset(); } catch (e) { /* ignore */ }
-                engine = null;
-            }
-            await initModel(currentModelKey, false);
-        };
-
-        // ========== STARTUP ==========
-        addSystemMsg(`🟢 WebGPU চেক করা হচ্ছে...`);
-        if (!navigator.gpu) {
-            addSystemMsg(
-                '⚠️ <span style="color:#ffcc00;">WebGPU নেই!</span><br>📱 Chrome 113+ ইন্সটল করো<br>🖥️ অথবা ডেস্কটপ Chrome/Edge ব্যাবহার করো'
-            );
-            sendBtn.disabled = true;
-            setStatus(false);
-        } else {
-            addSystemMsg('✅ WebGPU পাওয়া গেছে! মডেল ইন্সট্যান্সিয়েট হচ্ছে...');
-            initModel(currentModelKey, false);
-        }
-
-        // ========== EXPOSE FOR DEBUG ==========
-        window._engine = () => engine;
-        window._history = () => conversationHistory;
-        window._resetChat = () => {
-            conversationHistory = [{ role: "system", content: SYSTEM_PROMPT }];
-            chatBox.innerHTML = '';
-            addSystemMsg('🔄 চ্যাট রিসেট হয়েছে।');
-        };
+        // ===== START =====
+        log('💀 <b>FEEK_TERMINAL v2.0</b> — DEBUG MODE');
+        log('🔗 সব স্ট্যাটাস এখানে দেখতে পারবি...');
+        initModel();
     </script>
 </body>
 </html>
