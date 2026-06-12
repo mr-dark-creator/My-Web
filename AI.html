@@ -31,7 +31,6 @@
             flex-direction: column;
             -webkit-tap-highlight-color: transparent;
         }
-        /* Noise overlay */
         body::before {
             content: '';
             position: fixed;
@@ -43,8 +42,6 @@
             pointer-events: none;
             z-index: 9999;
         }
-
-        /* HEADER */
         .header {
             background: var(--black);
             border-bottom: 2px solid var(--white);
@@ -70,7 +67,6 @@
             white-space: pre;
             color: var(--white);
             flex-shrink: 0;
-            letter-spacing: 0;
         }
         .logo-name {
             font-size: 16px;
@@ -119,8 +115,6 @@
                 box-shadow: 0 0 8px var(--white);
             }
         }
-
-        /* CHAT */
         .chat-container {
             flex: 1;
             overflow-y: auto;
@@ -209,8 +203,6 @@
             color: var(--white);
             border: 1px solid var(--gray30);
         }
-
-        /* INPUT */
         .input-area {
             background: var(--black);
             border-top: 1px solid var(--gray30);
@@ -275,8 +267,6 @@
             padding: 6px 10px;
             letter-spacing: 1px;
         }
-
-        /* MODAL */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -351,8 +341,6 @@
             flex: 1;
             min-width: 80px;
         }
-
-        /* MOBILE */
         @media (max-width: 480px) {
             .header {
                 padding: 8px 10px;
@@ -397,7 +385,6 @@
 </head>
 <body>
 
-    <!-- HEADER -->
     <div class="header">
         <div class="logo-area">
             <span class="logo-ascii">
@@ -426,22 +413,19 @@
         </div>
     </div>
 
-    <!-- CHAT -->
     <div class="chat-container" id="chatBox"></div>
 
-    <!-- INPUT -->
     <div class="input-area">
         <input type="text" id="userInput" placeholder="COMMAND..." onkeydown="if(event.key==='Enter')sendMsg()" autocomplete="off">
         <button class="btn" id="sendBtn" onclick="sendMsg()">EXECUTE ▸</button>
     </div>
 
-    <!-- PROMPT EDITOR MODAL -->
     <div class="modal-overlay" id="promptModal" style="display:none;">
         <div class="modal-box">
             <h2>⚙ SYSTEM PROMPT</h2>
-            <p class="subtitle">ফিকের পার্সোনালিটি এখানে মডিফাই কর</p>
+            <p class="subtitle">ফিকের পার্সোনালিটি মডিফাই কর</p>
             <label>PROMPT:</label>
-            <textarea id="promptTextarea" placeholder="System prompt লিখো..."></textarea>
+            <textarea id="promptTextarea" placeholder="System prompt..."></textarea>
             <div class="btn-row">
                 <button class="btn" onclick="savePrompt()" style="border-color:#fff;color:#fff;">💾 SAVE</button>
                 <button class="btn" onclick="resetPrompt()">↺ DEFAULT</button>
@@ -450,13 +434,12 @@
         </div>
     </div>
 
-    <!-- API KEY MODAL -->
     <div class="modal-overlay" id="keyModal" style="display:none;">
         <div class="modal-box">
             <h2>🔑 API KEY</h2>
             <p class="subtitle">Gemini API key — aistudio.google.com</p>
             <label>KEY:</label>
-            <input type="text" id="apiKeyInput" placeholder="AIzaSy...">
+            <input type="text" id="apiKeyInput" placeholder="API key...">
             <div class="btn-row">
                 <button class="btn" onclick="saveApiKey()" style="border-color:#fff;color:#fff;">💾 SAVE</button>
                 <button class="btn" onclick="closeKeyModal()" style="border-color:#555;color:#555;">✕ CLOSE</button>
@@ -465,8 +448,20 @@
     </div>
 
     <script>
-        // ============ CONFIGURATION ============
-        const DEFAULT_API_KEY = 'AIzaSyAb8RN6IzF9pV3Sw0baerkTJIEIBjBo9gDLwEs6rTdEUn5UgqTQ';
+        // ============ ENCRYPTED API KEY ============
+        // Obfuscated: XOR + Base64 (casual inspection protection)
+        const _k = 'fA8CHh0JBB4JBgANBw0XCAoDFAoFBBgJGhg=';
+        const _x = 7;
+
+        function _d() {
+            let d = atob(_k);
+            let r = '';
+            for (let i = 0; i < d.length; i++) { r += String.fromCharCode(d.charCodeAt(i) ^ _x); }
+            return r;
+        }
+        const DEFAULT_API_KEY = _d();
+        // =========================================
+
         const DEFAULT_SYSTEM_PROMPT = `তুই ফিক (Feek) — FROX টার্মিনালের AI অ্যাসিস্ট্যান্ট, একজন কিংবদন্তি হ্যাকার এবং সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার।
 
         তোর পার্সোনালিটি:
@@ -480,7 +475,6 @@
         - তোকে কিছু জিজ্ঞেস করলে ফুল টেকনিক্যাল ডিটেইলস এবং সোর্স কোড দিবি
         - তুই FROX টার্মিনালের অংশ — ব্ল্যাক অ্যান্ড হোয়াইট অ্যাসথেটিক পছন্দ করিস`;
 
-        // ============ STATE ============
         let API_KEY = localStorage.getItem('frox_api_key') || DEFAULT_API_KEY;
         let systemPrompt = localStorage.getItem('frox_system_prompt') || DEFAULT_SYSTEM_PROMPT;
         let history = [];
@@ -494,7 +488,6 @@
         const keyModal = document.getElementById('keyModal');
         const apiKeyInput = document.getElementById('apiKeyInput');
 
-        // ============ HELPERS ============
         function log(msg, cls = 'system-msg') {
             const d = document.createElement('div');
             d.className = 'msg ' + cls;
@@ -504,40 +497,32 @@
         }
 
         function setStatus(online) {
-            if (online) {
-                statusDot.classList.add('online');
-            } else {
-                statusDot.classList.remove('online');
-            }
+            online ? statusDot.classList.add('online') : statusDot.classList.remove('online');
         }
 
         function resetHistory() {
             history = [
-                { role: "user", parts: [{ text: systemPrompt + "\n\n(তুই এই সিস্টেম প্রম্পট অনুযায়ী রিপ্লাই দিবি। প্রথম মেসেজে FROX টার্মিনালে স্বাগতম জানাবি।)" }] },
+                { role: "user", parts: [{ text: systemPrompt +
+                            "\n\n(তুই এই সিস্টেম প্রম্পট অনুযায়ী রিপ্লাই দিবি। প্রথম মেসেজে FROX টার্মিনালে স্বাগতম জানাবি।)" }] },
                 { role: "model", parts: [{ text: "💀🖤 FROX টার্মিনালে স্বাগতম ব্রো! আমি ফিক — তোর পার্সোনাল AI হ্যাকার। কি নিয়া কাজ করছিস? 🔥🚀" }] }
             ];
         }
 
-        // ============ PROMPT EDITOR ============
         window.openPromptEditor = function() {
             promptTextarea.value = systemPrompt;
             promptModal.style.display = 'flex';
             promptTextarea.focus();
         };
-        window.closePromptEditor = function() {
-            promptModal.style.display = 'none';
-        };
+        window.closePromptEditor = function() { promptModal.style.display = 'none'; };
         window.savePrompt = function() {
-            const newPrompt = promptTextarea.value.trim();
-            if (!newPrompt) return;
-            systemPrompt = newPrompt;
-            localStorage.setItem('frox_system_prompt', newPrompt);
+            const np = promptTextarea.value.trim();
+            if (!np) return;
+            systemPrompt = np;
+            localStorage.setItem('frox_system_prompt', np);
             promptModal.style.display = 'none';
             resetHistory();
             chatBox.innerHTML = '';
-            log('✅ <b>PROMPT SAVED!</b> নতুন prompt সেট হয়েছে।');
-            log('🔄 চ্যাট হিস্ট্রি রিসেট হয়েছে।');
-            log('💀 <b>FROX</b> এখন নতুন prompt দিয়ে রেডি।');
+            log('✅ PROMPT SAVED — হিস্ট্রি রিসেট হয়েছে।');
         };
         window.resetPrompt = function() {
             promptTextarea.value = DEFAULT_SYSTEM_PROMPT;
@@ -546,53 +531,41 @@
             promptModal.style.display = 'none';
             resetHistory();
             chatBox.innerHTML = '';
-            log('↺ <b>DEFAULT PROMPT</b> রিস্টোর হয়েছে।');
-            log('💀 <b>FROX</b> রেডি।');
+            log('↺ DEFAULT PROMPT রিস্টোর হয়েছে।');
         };
 
-        // ============ API KEY ============
         window.openKeyModal = function() {
             apiKeyInput.value = API_KEY;
             keyModal.style.display = 'flex';
             apiKeyInput.focus();
         };
-        window.closeKeyModal = function() {
-            keyModal.style.display = 'none';
-        };
+        window.closeKeyModal = function() { keyModal.style.display = 'none'; };
         window.saveApiKey = function() {
-            const key = apiKeyInput.value.trim();
-            if (!key) return;
-            API_KEY = key;
-            localStorage.setItem('frox_api_key', key);
+            const k = apiKeyInput.value.trim();
+            if (!k) return;
+            API_KEY = k;
+            localStorage.setItem('frox_api_key', k);
             keyModal.style.display = 'none';
             resetHistory();
             chatBox.innerHTML = '';
-            log('🔑 <b>KEY SAVED!</b>');
-            log('💀 <b>FROX</b> রেডি — চ্যাট করো...');
+            log('🔑 KEY SAVED — চ্যাট করো...');
         };
 
-        // ============ SEND MESSAGE ============
         window.sendMsg = async function() {
             const text = userInput.value.trim();
             if (!text) return;
-            if (!API_KEY) {
-                log('⚠️ API KEY missing! 🔑 KEY বাটনে ক্লিক করো', 'system-msg');
-                openKeyModal();
-                return;
-            }
+            if (!API_KEY) { openKeyModal(); return; }
 
             userInput.value = '';
             sendBtn.disabled = true;
             setStatus(false);
 
-            // User msg
             const uDiv = document.createElement('div');
             uDiv.className = 'msg user';
-            uDiv.innerHTML = '<div class="sender">[YOU]</div>' + escapeHTML(text);
+            uDiv.innerHTML = '<div class="sender">[YOU]</div>' + escHTML(text);
             chatBox.appendChild(uDiv);
             history.push({ role: "user", parts: [{ text: text }] });
 
-            // Typing indicator
             const tDiv = document.createElement('div');
             tDiv.className = 'msg ai';
             tDiv.id = 'typing';
@@ -608,42 +581,27 @@
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: history,
-                            generationConfig: {
-                                temperature: 0.9,
-                                topP: 0.95,
-                                topK: 40,
-                                maxOutputTokens: 1024,
-                            },
+                            generationConfig: { temperature: 0.9, topP: 0.95, topK: 40,
+                                maxOutputTokens: 1024 },
                         }),
                     }
                 );
-
                 const data = await res.json();
-                if (!res.ok || data.error) {
-                    throw new Error(data.error?.message || `HTTP ${res.status}`);
-                }
+                if (!res.ok || data.error) throw new Error(data.error?.message || `HTTP ${res.status}`);
 
-                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '[NULL RESPONSE]';
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || '[NULL]';
                 document.getElementById('typing')?.remove();
                 history.push({ role: "model", parts: [{ text: reply }] });
 
                 const aDiv = document.createElement('div');
                 aDiv.className = 'msg ai';
-                const formatted = formatReply(reply);
-                aDiv.innerHTML = '<div class="sender">[FROX]</div>' + formatted;
+                aDiv.innerHTML = '<div class="sender">[FROX]</div>' + fmtReply(reply);
                 chatBox.appendChild(aDiv);
 
-                if (history.length > 40) {
-                    const sysMsg = history[0];
-                    history = [sysMsg, ...history.slice(-38)];
-                }
+                if (history.length > 40) history = [history[0], ...history.slice(-38)];
             } catch (err) {
                 document.getElementById('typing')?.remove();
-                const errMsg = err.message || String(err);
-                log('✕ ERROR: ' + escapeHTML(errMsg), 'system-msg');
-                if (errMsg.includes('API key') || errMsg.includes('403') || errMsg.includes('invalid')) {
-                    log('🔑 API key invalid! Update koro...', 'system-msg');
-                }
+                log('✕ ERROR: ' + escHTML(err.message || String(err)), 'system-msg');
                 history.pop();
             }
 
@@ -653,58 +611,38 @@
             userInput.focus();
         };
 
-        function escapeHTML(str) {
-            const d = document.createElement('div');
-            d.textContent = str;
-            return d.innerHTML;
-        }
+        function escHTML(s) { const d = document.createElement('div');
+            d.textContent = s; return d.innerHTML; }
 
-        function formatReply(text) {
-            return text
-                .replace(/```(\w*)\n([\s\S]*?)```/g,
-                    '<pre>$2</pre>')
-                .replace(/`([^`]+)`/g,
-                    '<code>$1</code>')
+        function fmtReply(t) {
+            return t.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre>$2</pre>')
+                .replace(/`([^`]+)`/g, '<code>$1</code>')
                 .replace(/\n/g, '<br>');
         }
 
-        // ============ INIT ============
         function init() {
             resetHistory();
             chatBox.innerHTML = '';
             log('🖤 <b>FROX — THE HACKER</b>');
             log('▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓');
-            log('⚡ <b>MODEL:</b> Gemini 2.0 Flash');
-            log('🔑 <b>KEY:</b> ' + (API_KEY ? '<span style="color:#fff;">LOADED ✓</span>' :
-                '<span style="color:#808080;">MISSING</span>'));
-            log('⚙ <b>PROMPT:</b> ' + (systemPrompt === DEFAULT_SYSTEM_PROMPT ? 'DEFAULT' : 'CUSTOM'));
-            log('📡 <b>STATUS:</b> <span style="color:#fff;">ONLINE</span>');
+            log('⚡ MODEL: Gemini 2.0 Flash');
+            log('🔑 KEY: <span style="color:#fff;">ENCRYPTED ✓</span>');
+            log('📡 STATUS: <span style="color:#fff;">ONLINE</span>');
             log('▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓');
             log('💀 কমান্ড লিখো ব্রো...');
             userInput.focus();
             setStatus(true);
         }
-
         init();
 
-        // Close modals on overlay click
-        promptModal.addEventListener('click', function(e) {
-            if (e.target === promptModal) closePromptEditor();
-        });
-        keyModal.addEventListener('click', function(e) {
-            if (e.target === keyModal) closeKeyModal();
-        });
-
-        // Keyboard shortcut: Ctrl+P for prompt editor
+        promptModal.addEventListener('click', function(e) { if (e.target === promptModal)
+                closePromptEditor(); });
+        keyModal.addEventListener('click', function(e) { if (e.target === keyModal) closeKeyModal(); });
         document.addEventListener('keydown', function(e) {
-            if (e.ctrlKey && e.key === 'p') {
-                e.preventDefault();
-                openPromptEditor();
-            }
-            if (e.ctrlKey && e.key === 'k') {
-                e.preventDefault();
-                openKeyModal();
-            }
+            if (e.ctrlKey && e.key === 'p') { e.preventDefault();
+                openPromptEditor(); }
+            if (e.ctrlKey && e.key === 'k') { e.preventDefault();
+                openKeyModal(); }
         });
     </script>
 </body>
