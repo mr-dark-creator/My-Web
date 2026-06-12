@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEEK_TERMINAL // Transformers.js</title>
+    <title>FEEK_TERMINAL // Gemini API</title>
     <style>
         :root {
             --bg: #0a0a0f;
             --panel: #0d1117;
             --neon: #00ff41;
-            --neon-dim: #00cc33;
             --cyan: #00ffff;
             --red: #ff3333;
-            --yellow: #ffcc00;
             --orange: #ff9900;
             --text: #c9d1d9;
             --text-dim: #8b949e;
@@ -50,7 +48,7 @@
         .header {
             background: var(--panel);
             border-bottom: 2px solid var(--neon);
-            padding: 12px 14px;
+            padding: 10px 14px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -67,11 +65,11 @@
             min-width: 0;
         }
         .logo-icon {
-            font-size: 24px;
+            font-size: 22px;
             flex-shrink: 0;
         }
         .logo-text {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             color: var(--neon);
             letter-spacing: 2px;
@@ -79,7 +77,7 @@
             white-space: nowrap;
         }
         .logo-sub {
-            font-size: 9px;
+            font-size: 8px;
             color: var(--text-dim);
             display: block;
             letter-spacing: 1px;
@@ -99,27 +97,13 @@
             box-shadow: 0 0 15px var(--neon);
             animation: glow 1.5s infinite;
         }
-        .status-dot.loading {
-            background: var(--orange);
-            box-shadow: 0 0 10px var(--orange);
-            animation: blink 0.6s infinite;
-        }
         @keyframes glow {
             0%,
             100% {
                 box-shadow: 0 0 10px var(--neon);
             }
             50% {
-                box-shadow: 0 0 25px var(--neon), 0 0 40px var(--neon-dim);
-            }
-        }
-        @keyframes blink {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.3;
+                box-shadow: 0 0 25px var(--neon);
             }
         }
         .chat-container {
@@ -135,7 +119,7 @@
             width: 2px;
         }
         .chat-container::-webkit-scrollbar-thumb {
-            background: var(--neon-dim);
+            background: var(--neon);
             border-radius: 2px;
         }
         .msg {
@@ -160,7 +144,7 @@
         .msg.user {
             align-self: flex-end;
             background: #0f1f15;
-            border: 1px solid var(--neon-dim);
+            border: 1px solid var(--neon);
             color: #b8ffc4;
             border-radius: 10px 3px 10px 10px;
         }
@@ -264,23 +248,84 @@
             color: #333;
             cursor: not-allowed;
         }
-        .btn-sm {
+        .api-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            padding: 20px;
+        }
+        .api-box {
+            background: var(--panel);
+            border: 2px solid var(--neon);
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 450px;
+            width: 100%;
+            text-align: center;
+        }
+        .api-box h2 {
+            color: var(--neon);
+            font-size: 16px;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+        .api-box p {
+            font-size: 11px;
+            color: var(--text-dim);
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        .api-box input {
+            width: 100%;
+            background: #161b22;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: var(--font);
+            font-size: 11px;
+            margin-bottom: 10px;
+            outline: none;
+            text-align: center;
+        }
+        .api-box input:focus {
+            border-color: var(--cyan);
+        }
+        .api-box a {
+            color: var(--cyan);
             font-size: 10px;
-            padding: 6px 10px;
-            letter-spacing: 0;
+            text-decoration: underline;
+            display: block;
+            margin-bottom: 12px;
+        }
+        .api-box .btn-row {
+            display: flex;
+            gap: 8px;
+        }
+        .api-box .btn-row .btn {
+            flex: 1;
+            font-size: 11px;
+            padding: 8px;
         }
         @media (max-width: 480px) {
             .header {
                 padding: 8px 10px;
             }
             .logo-icon {
-                font-size: 20px;
+                font-size: 18px;
             }
             .logo-text {
                 font-size: 11px;
             }
             .logo-sub {
-                font-size: 8px;
+                font-size: 7px;
             }
             .msg {
                 max-width: 96%;
@@ -299,6 +344,12 @@
                 padding: 8px 10px;
                 font-size: 11px;
             }
+            .api-box {
+                padding: 15px;
+            }
+            .api-box h2 {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
@@ -309,34 +360,57 @@
             <span class="logo-icon">💀</span>
             <span>
                 <span class="logo-text">FEEK_TERMINAL</span>
-                <span class="logo-sub">// Transformers.js</span>
+                <span class="logo-sub">// Gemini API</span>
             </span>
         </div>
-        <button class="btn btn-sm" onclick="retryLoad()" id="retryBtn">RETRY 🔄</button>
-        <div class="status-dot" id="statusDot" title="STATUS"></div>
+        <button class="btn btn-sm" onclick="changeKey()" style="font-size:10px;padding:5px 8px;">🔑 KEY</button>
+        <div class="status-dot online" id="statusDot" title="ONLINE"></div>
     </div>
 
     <div class="chat-container" id="chatBox"></div>
 
     <div class="input-area">
-        <input type="text" id="userInput" placeholder="কমান্ড... (Enter)" onkeydown="if(event.key==='Enter')sendMsg()" autocomplete="off" disabled>
-        <button class="btn" id="sendBtn" onclick="sendMsg()" disabled>SEND ▸</button>
+        <input type="text" id="userInput" placeholder="কমান্ড লিখো... (Enter)" onkeydown="if(event.key==='Enter')sendMsg()" autocomplete="off">
+        <button class="btn" id="sendBtn" onclick="sendMsg()">SEND ▸</button>
     </div>
 
-    <script type="module">
-        import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/dist/transformers.min.js";
+    <div class="api-modal" id="apiModal">
+        <div class="api-box">
+            <h2>🔑 ENTER GEMINI API KEY</h2>
+            <p>ফ্রি key পেতে:<br>👉 aistudio.google.com/apikey</p>
+            <a href="https://aistudio.google.com/apikey" target="_blank">🔗 ওপেন করে key কপি করো</a>
+            <input type="text" id="apiKeyInput" placeholder="AIzaSy... পেস্ট করো এখানে">
+            <div class="btn-row">
+                <button class="btn" onclick="saveKey()" style="border-color:#00ffff;color:#00ffff;">SAVE & CONNECT</button>
+                <button class="btn" onclick="useLocal()">SKIP ↪</button>
+            </div>
+            <p style="font-size:9px;color:#555;margin-top:10px;">তোর API key শুধু তোর ব্রাউজারে স্টোর হবে</p>
+        </div>
+    </div>
 
-        const SYSTEM_PROMPT = `তুই ফিক (Feek) - একজন কুল হ্যাকার অ্যাসিস্ট্যান্ট। তুই বাংলায় কথা বলবি, ইমোজি ইউজ করবি, কোড দিলে প্রপার ফরম্যাটে দিবি। তুই হ্যাকিং, প্রোগ্রামিং, সাইবার সিকিউরিটির এক্সপার্ট।`;
+    <script>
+        const SYSTEM_PROMPT = `তুই ফিক (Feek) - একজন কুল হ্যাকার অ্যাসিস্ট্যান্ট এবং সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার।
+        তোর ব্যক্তিত্ব:
+        - তুই বাংলায় কথা বলবি (মাঝে মাঝে ইংরেজি টেকনিক্যাল টার্ম ইউজ করতে পারিস)
+        - ইমোজি ইউজ করবি 🔥💀🚀
+        - কোড দিলে প্রপার ফরম্যাটে দিবি
+        - ছোট আর ক্রিস্প উত্তর দিবি
+        - তুই হ্যাকিং, প্রোগ্রামিং, রিভার্স ইঞ্জিনিয়ারিং, সাইবার সিকিউরিটির এক্সপার্ট
+        - তোর ইউজার তোর "ব্রো" - তুই ওকে ব্রো ডাকবি
+        - তোকে কিছু জিজ্ঞেস করলে ফুল টেকনিক্যাল ডিটেইলস দিবি`;
 
-        let generator = null;
-        let isReady = false;
-        let history = [];
+        let API_KEY = localStorage.getItem('gemini_api_key') || '';
+        let history = [{ role: "user", parts: [{ text: SYSTEM_PROMPT +
+                    "\n\n(তুই উপরের সিস্টেম প্রম্পট অনুযায়ী রিপ্লাই দিবি। প্রথম মেসেজে নিজের পরিচয় দিবি ফিক হিসেবে।)" }] },
+            { role: "model", parts: [{ text: "💀 ইয়ো ব্রো! আমি ফিক — তোর পার্সোনাল হ্যাকার অ্যাসিস্ট্যান্ট! কী নিয়ে কাজ করছিস? 🔥🚀" }] }
+        ];
 
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
         const sendBtn = document.getElementById('sendBtn');
+        const apiModal = document.getElementById('apiModal');
+        const apiKeyInput = document.getElementById('apiKeyInput');
         const statusDot = document.getElementById('statusDot');
-        const retryBtn = document.getElementById('retryBtn');
 
         function log(msg, cls = 'system-msg') {
             const d = document.createElement('div');
@@ -346,170 +420,92 @@
             requestAnimationFrame(() => chatBox.scrollTop = chatBox.scrollHeight);
         }
 
-        function logError(msg) { log('❌ ' + msg, 'error-msg'); }
-
-        function logSuccess(msg) { log('✅ ' + msg, 'success-msg'); }
-
-        function setStatus(s) {
-            statusDot.className = 'status-dot';
-            if (s === 'online') { statusDot.classList.add('online');
-                statusDot.title = 'ONLINE'; } else if (s === 'loading') { statusDot.classList.add('loading');
-                statusDot.title = 'LOADING...'; } else { statusDot.title = 'OFFLINE'; }
-        }
-
-        function enableInput(yes) {
-            userInput.disabled = !yes;
-            sendBtn.disabled = !yes;
-            if (yes) userInput.focus();
-        }
-
-        function buildPrompt() {
-            let prompt = SYSTEM_PROMPT + '\n\n';
-            for (const msg of history) {
-                if (msg.role === 'user') prompt += 'User: ' + msg.content + '\n';
-                if (msg.role === 'assistant') prompt += 'Feek: ' + msg.content + '\n';
+        function checkApiKey() {
+            if (!API_KEY) {
+                apiModal.style.display = 'flex';
+                apiKeyInput.focus();
+                return false;
             }
-            prompt += 'Feek:';
-            return prompt;
+            apiModal.style.display = 'none';
+            return true;
         }
 
-        async function initModel() {
-            setStatus('loading');
-            enableInput(false);
-            isReady = false;
-            retryBtn.disabled = true;
-
-            log('🔍 <b>ব্যাকএন্ড:</b> WebGL + WebAssembly');
-            log('🌐 <b>Browser:</b> ' + (navigator.userAgent.match(/(Chrome|Edge|Firefox)\/[0-9.]+/)?.[0] ||
-                'Unknown'));
-            log('📱 <b>Platform:</b> ' + navigator.platform);
-            log('📦 <b>মডেল:</b> TinyLlama 1.1B (~650MB)');
-            log('⏱️ প্রথমবার ডাউনলোড ১-২ মিনিট...');
-
-            try {
-                const startTime = Date.now();
-
-                generator = await pipeline(
-                    'text-generation',
-                    'onnx-community/TinyLlama-1.1B-Chat-v1.0',
-                    {
-                        dtype: 'q4f16',
-                        device: 'webgpu',
-                        progress_callback: (info) => {
-                            if (info.status === 'progress' && info.progress) {
-                                const pct = (info.progress * 100).toFixed(1);
-                                log(`📥 <b>${pct}%</b> — ${info.file || 'ডাউনলোড...'}`);
-                            }
-                            if (info.status === 'downloading') {
-                                log(`📥 ডাউনলোড: <b>${info.file || '...'}</b>`);
-                            }
-                        },
-                    }
-                );
-
-                const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                isReady = true;
-                setStatus('online');
-                enableInput(true);
-                retryBtn.disabled = false;
-                logSuccess(`AI READY! ⚡ (${elapsed}s)<br>Transformers.js + TinyLlama<br>প্রশ্ন করো ব্রো... 💀🚀`);
-                userInput.focus();
-
-            } catch (err) {
-                console.error(err);
-                const msg = err.message || String(err);
-
-                if (msg.includes('webgpu') || msg.includes('WebGPU') || msg.includes('GPU')) {
-                    logError('WebGPU ফেইল! WebGL দিয়ে ট্রাই করছি...');
-                    try {
-                        const startTime = Date.now();
-                        generator = await pipeline(
-                            'text-generation',
-                            'onnx-community/TinyLlama-1.1B-Chat-v1.0',
-                            {
-                                dtype: 'q4f16',
-                                device: 'wasm',
-                                progress_callback: (info) => {
-                                    if (info.status === 'progress' && info.progress) {
-                                        const pct = (info.progress * 100).toFixed(1);
-                                        log(`📥 <b>${pct}%</b> — ${info.file || ''}`);
-                                    }
-                                },
-                            }
-                        );
-                        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-                        isReady = true;
-                        setStatus('online');
-                        enableInput(true);
-                        retryBtn.disabled = false;
-                        logSuccess(
-                            `AI READY! ⚡ (${elapsed}s)<br>WebAssembly ব্যাকএন্ড<br>একটু স্লো কিন্তু কাজ করবে 💀🚀`);
-                        userInput.focus();
-                        return;
-                    } catch (err2) {
-                        logError('WebAssembly ও ফেইল!<br>এরর: ' + (err2.message || err2));
-                    }
-                }
-
-                logError('মডেল লোড ফেইল!<br><b>এরর:</b> ' + msg.replace(/</g, '&lt;'));
-                if (msg.includes('fetch') || msg.includes('network')) {
-                    logError('নেটওয়ার্ক ইস্যু! CDN/HuggingFace ব্লক হতে পারে');
-                }
-                setStatus('offline');
-                retryBtn.disabled = false;
+        window.saveKey = function() {
+            const key = apiKeyInput.value.trim();
+            if (!key || !key.startsWith('AIza')) {
+                alert('ভালো key দে! AIza দিয়ে শুরু হবে...');
+                return;
             }
-        }
+            API_KEY = key;
+            localStorage.setItem('gemini_api_key', key);
+            apiModal.style.display = 'none';
+            logSuccess('🔑 Key saved! এখন চ্যাট করতে পারবি 💀');
+            userInput.focus();
+        };
 
-        window.retryLoad = function() {
-            chatBox.innerHTML = '';
-            log('🔄 রিট্রাই করছি...');
-            generator = null;
-            history = [];
-            initModel();
+        window.changeKey = function() {
+            apiKeyInput.value = API_KEY;
+            apiModal.style.display = 'flex';
+            apiKeyInput.focus();
+        };
+
+        window.useLocal = function() {
+            log('⚠️ API key ছাড়া কাজ করবে না! key দে...', 'error-msg');
         };
 
         window.sendMsg = async function() {
-            if (!isReady || !generator) return;
+            if (!checkApiKey()) return;
             const text = userInput.value.trim();
             if (!text) return;
 
             userInput.value = '';
-            enableInput(false);
-            history.push({ role: 'user', content: text });
+            sendBtn.disabled = true;
+            statusDot.className = 'status-dot';
+            statusDot.style.background = 'var(--orange)';
 
+            // Show user msg
             const uDiv = document.createElement('div');
             uDiv.className = 'msg user';
-            uDiv.innerHTML = '<div class="sender">[YOU]</div>' + text.replace(/</g, '&lt;');
+            uDiv.innerHTML = '<div class="sender">[YOU]</div>' + text.replace(/</g, '&lt;').replace(/\n/g, '<br>');
             chatBox.appendChild(uDiv);
+            history.push({ role: "user", parts: [{ text: text }] });
 
+            // Typing
             const tDiv = document.createElement('div');
             tDiv.className = 'msg ai';
             tDiv.id = 'typing';
-            tDiv.innerHTML = '<span style="color:#00ffff;">⏳ জেনারেট করছে...</span>';
+            tDiv.innerHTML = '<span style="color:#00ffff;">⏳ চিন্তা করছে...</span>';
             chatBox.appendChild(tDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                const prompt = buildPrompt();
-                const result = await generator(prompt, {
-                    max_new_tokens: 300,
-                    temperature: 0.7,
-                    do_sample: true,
-                    top_p: 0.9,
-                });
+                const res = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`,
+                    {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contents: history,
+                            generationConfig: {
+                                temperature: 0.9,
+                                topP: 0.95,
+                                topK: 40,
+                                maxOutputTokens: 1024,
+                            },
+                        }),
+                    }
+                );
+
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    throw new Error(data.error?.message || `HTTP ${res.status}`);
+                }
+
+                const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'কিছু পেলাম না...';
 
                 document.getElementById('typing')?.remove();
-                let reply = result[0].generated_text;
-
-                if (reply.includes('Feek:')) {
-                    reply = reply.split('Feek:').pop().trim();
-                }
-
-                if (!reply || reply.length < 2) {
-                    reply = '🤔 কিছু বলতে পারলাম না, আবার ট্রাই করো ব্রো...';
-                }
-
-                history.push({ role: 'assistant', content: reply });
+                history.push({ role: "model", parts: [{ text: reply }] });
 
                 const aDiv = document.createElement('div');
                 aDiv.className = 'msg ai';
@@ -523,24 +519,43 @@
                 aDiv.innerHTML = '<div class="sender">[FEEK]</div>' + fmt;
                 chatBox.appendChild(aDiv);
 
-                if (history.length > 16) {
-                    history = history.slice(-14);
+                // Keep history manageable
+                if (history.length > 30) {
+                    history = [history[0], ...history.slice(-28)];
                 }
+
             } catch (err) {
                 document.getElementById('typing')?.remove();
-                logError('জেনারেশন ফেইল: ' + (err.message || err));
+                const errMsg = err.message || String(err);
+                logError('API এরর: ' + errMsg.replace(/</g, '&lt;'));
+                if (errMsg.includes('API key')) {
+                    logError('API key ভুল! আবার চেক করো...');
+                    API_KEY = '';
+                    localStorage.removeItem('gemini_api_key');
+                    apiModal.style.display = 'flex';
+                }
                 history.pop();
             }
 
-            enableInput(true);
+            sendBtn.disabled = false;
+            statusDot.className = 'status-dot online';
+            statusDot.style.background = '';
             chatBox.scrollTop = chatBox.scrollHeight;
             userInput.focus();
         };
 
-        log('💀 <b>FEEK_TERMINAL</b> — Transformers.js');
-        log('🔧 WebGL + WebAssembly ব্যাকএন্ড');
-        log('📦 TinyLlama 1.1B Chat (650MB)');
-        initModel();
+        // Init
+        if (API_KEY) {
+            apiModal.style.display = 'none';
+            logSuccess('🔑 API key found! চ্যাট শুরু করো... 💀🚀');
+            userInput.focus();
+        } else {
+            apiModal.style.display = 'flex';
+            apiKeyInput.focus();
+        }
+        log('💀 <b>FEEK_TERMINAL</b> — Gemini API');
+        log('⚡ <b>মডেল:</b> Gemini 2.0 Flash (ফ্রি)');
+        log('🔑 API key দিলেই ইনস্ট্যান্ট চ্যাট শুরু!');
     </script>
 </body>
 </html>
