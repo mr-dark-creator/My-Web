@@ -1,17 +1,9 @@
-
-# 🔥 API চেঞ্জ হয়ে গেছে! ফিক্সড কোড 🔥
-
-ব্রো, সমস্যা ধরা পড়েছে — `MLCEngine.create` ফাংশনটা আর নেই, WebLLM লাইব্রেরির API আপডেট হয়েছে। এখন `CreateMLCEngine` নামে আলাদা ফাংশন ইউজ করতে হয়।
-
-নিচের ফিক্সড ভার্সন কপি কর:
-
-```html
 <!DOCTYPE html>
 <html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FEEK_TERMINAL v3 // API FIX</title>
+    <title>FEEK_TERMINAL // Transformers.js</title>
     <style>
         :root {
             --bg: #0a0a0f;
@@ -63,7 +55,6 @@
             align-items: center;
             justify-content: space-between;
             gap: 8px;
-            box-shadow: 0 0 20px rgba(0, 255, 65, 0.1);
             flex-shrink: 0;
             position: sticky;
             top: 0;
@@ -100,7 +91,6 @@
             height: 10px;
             border-radius: 50%;
             background: var(--red);
-            box-shadow: 0 0 10px var(--red);
             flex-shrink: 0;
             transition: all 0.5s;
         }
@@ -319,7 +309,7 @@
             <span class="logo-icon">💀</span>
             <span>
                 <span class="logo-text">FEEK_TERMINAL</span>
-                <span class="logo-sub">// v3.0 API FIX</span>
+                <span class="logo-sub">// Transformers.js</span>
             </span>
         </div>
         <button class="btn btn-sm" onclick="retryLoad()" id="retryBtn">RETRY 🔄</button>
@@ -334,14 +324,13 @@
     </div>
 
     <script type="module">
-        // FIXED: নতুন API — CreateMLCEngine ফাংশন ইউজ করছি
-        import { CreateMLCEngine } from "https://esm.run/@mlc-ai/web-llm";
+        import { pipeline } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.0.2/dist/transformers.min.js";
 
         const SYSTEM_PROMPT = `তুই ফিক (Feek) - একজন কুল হ্যাকার অ্যাসিস্ট্যান্ট। তুই বাংলায় কথা বলবি, ইমোজি ইউজ করবি, কোড দিলে প্রপার ফরম্যাটে দিবি। তুই হ্যাকিং, প্রোগ্রামিং, সাইবার সিকিউরিটির এক্সপার্ট।`;
 
-        let engine = null;
+        let generator = null;
         let isReady = false;
-        let history = [{ role: "system", content: SYSTEM_PROMPT }];
+        let history = [];
 
         const chatBox = document.getElementById('chatBox');
         const userInput = document.getElementById('userInput');
@@ -374,68 +363,98 @@
             if (yes) userInput.focus();
         }
 
+        function buildPrompt() {
+            let prompt = SYSTEM_PROMPT + '\n\n';
+            for (const msg of history) {
+                if (msg.role === 'user') prompt += 'User: ' + msg.content + '\n';
+                if (msg.role === 'assistant') prompt += 'Feek: ' + msg.content + '\n';
+            }
+            prompt += 'Feek:';
+            return prompt;
+        }
+
         async function initModel() {
             setStatus('loading');
             enableInput(false);
             isReady = false;
             retryBtn.disabled = true;
 
-            log('🔍 <b>WebGPU:</b> ' + (navigator.gpu ? '<span style="color:#0f0">YES ✅</span>' :
-                '<span style="color:#f00">NO ❌</span>'));
-            log('🌐 <b>Browser:</b> ' + (navigator.userAgent.match(/(Chrome|Edge)\/[0-9.]+/)?.[0] || 'Unknown'));
+            log('🔍 <b>ব্যাকএন্ড:</b> WebGL + WebAssembly');
+            log('🌐 <b>Browser:</b> ' + (navigator.userAgent.match(/(Chrome|Edge|Firefox)\/[0-9.]+/)?.[0] ||
+                'Unknown'));
             log('📱 <b>Platform:</b> ' + navigator.platform);
-
-            if (!navigator.gpu) {
-                logError('WebGPU নেই! Chrome 121+ লাগবে');
-                setStatus('offline');
-                retryBtn.disabled = false;
-                return;
-            }
-
-            log('⏳ <b>CreateMLCEngine</b> কল করছি...');
-            log('📦 মডেল: Gemma 2B Q4 (~1.4GB)');
-            log('⏱️ ডাউনলোড শুরু হলে % দেখাবে...');
+            log('📦 <b>মডেল:</b> TinyLlama 1.1B (~650MB)');
+            log('⏱️ প্রথমবার ডাউনলোড ১-২ মিনিট...');
 
             try {
                 const startTime = Date.now();
 
-                // ====== FIXED API CALL ======
-                engine = await CreateMLCEngine(
-                    "gemma-2-2b-it-q4f16_1-MLC", {
-                        modelCache: "indexedDB",
-                        initProgressCallback: (report) => {
-                            const pct = report.progress ? (report.progress * 100).toFixed(1) : '?';
-                            log(`📥 <b>${pct}%</b> — ${report.text || 'ডাউনলোড হচ্ছে...'}`);
+                generator = await pipeline(
+                    'text-generation',
+                    'onnx-community/TinyLlama-1.1B-Chat-v1.0',
+                    {
+                        dtype: 'q4f16',
+                        device: 'webgpu',
+                        progress_callback: (info) => {
+                            if (info.status === 'progress' && info.progress) {
+                                const pct = (info.progress * 100).toFixed(1);
+                                log(`📥 <b>${pct}%</b> — ${info.file || 'ডাউনলোড...'}`);
+                            }
+                            if (info.status === 'downloading') {
+                                log(`📥 ডাউনলোড: <b>${info.file || '...'}</b>`);
+                            }
                         },
                     }
                 );
-                // =============================
 
                 const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
                 isReady = true;
                 setStatus('online');
                 enableInput(true);
                 retryBtn.disabled = false;
-                logSuccess(`AI READY! ⚡ (${elapsed}s)<br>প্রশ্ন করো ব্রো... 💀🚀`);
+                logSuccess(`AI READY! ⚡ (${elapsed}s)<br>Transformers.js + TinyLlama<br>প্রশ্ন করো ব্রো... 💀🚀`);
                 userInput.focus();
 
             } catch (err) {
                 console.error(err);
                 const msg = err.message || String(err);
-                logError('লোড ফেইল!<br><b>এরর:</b> ' + msg.replace(/</g, '&lt;'));
 
-                if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
-                    logError('নেটওয়ার্ক ইস্যু! CDN ব্লক হতে পারে');
-                    log('💡 VPN ট্রাই করো বা WiFi চেঞ্জ করো');
-                }
-                if (msg.includes('quota') || msg.includes('storage')) {
-                    logError('স্টোরেজ ফুল! IndexedDB ক্লিয়ার করো');
-                }
-                if (msg.includes('WebGPU')) {
-                    logError('WebGPU ইনিশিয়ালাইজেশন ফেইল');
-                    log('💡 chrome://flags → WebGPU → Enabled');
+                if (msg.includes('webgpu') || msg.includes('WebGPU') || msg.includes('GPU')) {
+                    logError('WebGPU ফেইল! WebGL দিয়ে ট্রাই করছি...');
+                    try {
+                        const startTime = Date.now();
+                        generator = await pipeline(
+                            'text-generation',
+                            'onnx-community/TinyLlama-1.1B-Chat-v1.0',
+                            {
+                                dtype: 'q4f16',
+                                device: 'wasm',
+                                progress_callback: (info) => {
+                                    if (info.status === 'progress' && info.progress) {
+                                        const pct = (info.progress * 100).toFixed(1);
+                                        log(`📥 <b>${pct}%</b> — ${info.file || ''}`);
+                                    }
+                                },
+                            }
+                        );
+                        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+                        isReady = true;
+                        setStatus('online');
+                        enableInput(true);
+                        retryBtn.disabled = false;
+                        logSuccess(
+                            `AI READY! ⚡ (${elapsed}s)<br>WebAssembly ব্যাকএন্ড<br>একটু স্লো কিন্তু কাজ করবে 💀🚀`);
+                        userInput.focus();
+                        return;
+                    } catch (err2) {
+                        logError('WebAssembly ও ফেইল!<br>এরর: ' + (err2.message || err2));
+                    }
                 }
 
+                logError('মডেল লোড ফেইল!<br><b>এরর:</b> ' + msg.replace(/</g, '&lt;'));
+                if (msg.includes('fetch') || msg.includes('network')) {
+                    logError('নেটওয়ার্ক ইস্যু! CDN/HuggingFace ব্লক হতে পারে');
+                }
                 setStatus('offline');
                 retryBtn.disabled = false;
             }
@@ -444,45 +463,53 @@
         window.retryLoad = function() {
             chatBox.innerHTML = '';
             log('🔄 রিট্রাই করছি...');
-            if (engine) {
-                try { engine.reset(); } catch (e) {}
-                engine = null;
-            }
-            history = [{ role: "system", content: SYSTEM_PROMPT }];
+            generator = null;
+            history = [];
             initModel();
         };
 
         window.sendMsg = async function() {
-            if (!isReady || !engine) return;
+            if (!isReady || !generator) return;
             const text = userInput.value.trim();
             if (!text) return;
 
             userInput.value = '';
             enableInput(false);
+            history.push({ role: 'user', content: text });
 
             const uDiv = document.createElement('div');
             uDiv.className = 'msg user';
             uDiv.innerHTML = '<div class="sender">[YOU]</div>' + text.replace(/</g, '&lt;');
             chatBox.appendChild(uDiv);
-            history.push({ role: "user", content: text });
 
             const tDiv = document.createElement('div');
             tDiv.className = 'msg ai';
             tDiv.id = 'typing';
-            tDiv.innerHTML = '<span style="color:#00ffff;">⏳ চিন্তা করছে...</span>';
+            tDiv.innerHTML = '<span style="color:#00ffff;">⏳ জেনারেট করছে...</span>';
             chatBox.appendChild(tDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
 
             try {
-                // FIXED: নতুন chat API — OpenAI-compatible
-                const completion = await engine.chat.completions.create({
-                    messages: history,
+                const prompt = buildPrompt();
+                const result = await generator(prompt, {
+                    max_new_tokens: 300,
                     temperature: 0.7,
-                    max_tokens: 1024,
+                    do_sample: true,
+                    top_p: 0.9,
                 });
-                const reply = completion.choices[0].message.content;
 
                 document.getElementById('typing')?.remove();
+                let reply = result[0].generated_text;
+
+                if (reply.includes('Feek:')) {
+                    reply = reply.split('Feek:').pop().trim();
+                }
+
+                if (!reply || reply.length < 2) {
+                    reply = '🤔 কিছু বলতে পারলাম না, আবার ট্রাই করো ব্রো...';
+                }
+
+                history.push({ role: 'assistant', content: reply });
 
                 const aDiv = document.createElement('div');
                 aDiv.className = 'msg ai';
@@ -495,14 +522,13 @@
                     .replace(/\n/g, '<br>');
                 aDiv.innerHTML = '<div class="sender">[FEEK]</div>' + fmt;
                 chatBox.appendChild(aDiv);
-                history.push({ role: "assistant", content: reply });
 
-                if (history.length > 22) {
-                    history = [history[0], ...history.slice(-20)];
+                if (history.length > 16) {
+                    history = history.slice(-14);
                 }
             } catch (err) {
                 document.getElementById('typing')?.remove();
-                logError('রিপ্লাই ফেইল: ' + (err.message || err));
+                logError('জেনারেশন ফেইল: ' + (err.message || err));
                 history.pop();
             }
 
@@ -511,9 +537,9 @@
             userInput.focus();
         };
 
-        // ===== START =====
-        log('💀 <b>FEEK_TERMINAL v3.0</b> — API FIX');
-        log('🔧 <b>CreateMLCEngine</b> + OpenAI Chat API');
+        log('💀 <b>FEEK_TERMINAL</b> — Transformers.js');
+        log('🔧 WebGL + WebAssembly ব্যাকএন্ড');
+        log('📦 TinyLlama 1.1B Chat (650MB)');
         initModel();
     </script>
 </body>
